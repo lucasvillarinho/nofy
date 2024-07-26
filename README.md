@@ -1,6 +1,6 @@
 # 📬 nofy
 
-A versatile library and CLI for sending notifications to popular services (Slack, Discord, Resend...)
+A versatile library and CLI for sending notifications to popular services such as Slack, Discord, Resend, and more
 
 ## Development
 
