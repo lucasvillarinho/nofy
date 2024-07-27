@@ -1,3 +1,9 @@
+GO_FILES := $(shell find . -name '*.go')
+
+GOFMT := gofumpt
+GOIMPORTS := goimports
+
+
 .PHONY: help
 help:
 	@echo "Use: make [target]"
@@ -12,11 +18,26 @@ pre-commit-install: ## Pre-commit install
 	@pre-commit install
 
 .phony: pre-commit-run
-pre-commit-run: ## Pre-commit run
+pre-commit-run: format ## Pre-commit run
 	@echo "Run pre-commit hooks..."
 	@pre-commit run --all-files
+	@echo "Pre-commit hooks passed successfully"
+
+build:
+	@echo "Building..."
+	@go build -o bin/ ./...
+	@echo "Build completed successfully"
+
 
 .PHONY: lint
-lint: ## Run lint
-	@golangci-lint run
+lint: build ## Run lint
+	@echo "Running linter..."
+	@golangci-lint run ./...
+	@echo "Linter passed successfully"
 
+.PHONY: format
+format:
+	@echo "Formatting code..."
+	@$(GOFMT) -w $(GO_FILES)
+	@$(GOIMPORTS) -w $(GO_FILES)
+	@echo "Code formatted successfully"

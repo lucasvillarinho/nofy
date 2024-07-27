@@ -22,3 +22,7 @@ go.work
 go.work.sum
 
 .idea
+
+main.go
+
+/bin

@@ -11,4 +11,8 @@ repos:
       - id: go-test-mod
       - id: go-fumpt
       - id: go-imports
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.41.1
+    hooks:
       - id: golangci-lint
+        args: ["--config", ".golangci.yml"]
