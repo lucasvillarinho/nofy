@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/lucasvillarinho/nofy/internal/senders/slack/blocks"
-
 	envl "github.com/caarlos0/env/v11"
 )
 
@@ -18,14 +16,22 @@ const timeout = 5000
 
 // Slack is a client to send messages to Slack.
 type Slack struct {
-	url     string
-	token   string
-	timeout time.Duration
+	url        string
+	token      string
+	timeout    time.Duration
+	recipients []Recipient
 }
 
 // config is the configuration for the Slack client.
 type config struct {
 	token string `env:"NOFY_SLACK_TOKEN"`
+}
+
+// Message is the message to send to Slack.
+type Message struct {
+	Channel  string `json:"channel"`
+	Text     string `json:"text"`
+	Markdown bool   `json:"mrkdwn"`
 }
 
 // Response is the response from Slack.
@@ -36,6 +42,14 @@ type Response struct {
 	Error string `json:"error,omitempty"`
 }
 
+type Recipient struct {
+	Channel string `json:"channel"`
+}
+
+type BlockMessage struct {
+	Channel string                   `json:"channel"`
+	Blocks  []map[string]interface{} `json:"blocks"`
+}
 type Option func(*Slack)
 
 // NewSlackClient creates a new Slack client.
@@ -45,9 +59,10 @@ func NewSlackClient(options ...Option) (*Slack, error) {
 		return nil, err
 	}
 	slack := &Slack{
-		url:     "https://slack.com/api/chat.postMessage",
-		token:   cfg.token,
-		timeout: timeout * time.Millisecond,
+		url:        "https://slack.com/api/chat.postMessage",
+		token:      cfg.token,
+		timeout:    timeout * time.Millisecond,
+		recipients: make([]Recipient, 0),
 	}
 
 	for _, opt := range options {
@@ -68,6 +83,21 @@ func WithTimeout(timeout time.Duration) Option {
 func WithToken(token string) Option {
 	return func(s *Slack) {
 		s.token = token
+	}
+}
+
+// AddRecipient adds a recipient to the list of recipients.
+func (s *Slack) AddRecipient(channel string) {
+	s.recipients = append(s.recipients, Recipient{Channel: channel})
+}
+
+// RemoveRecipient removes a recipient from the list of recipients.
+func (s *Slack) RemoveRecipient(channel string) {
+	for i, recipient := range s.recipients {
+		if recipient.Channel == channel {
+			s.recipients = append(s.recipients[:i], s.recipients[i+1:]...)
+			return
+		}
 	}
 }
 
@@ -109,14 +139,14 @@ func (s *Slack) send(ctx context.Context, body []byte) error {
 }
 
 // SendBlocks sends a message with blocks to a Slack channel.
-// It returns an error if the message could not be sent,
-// or if the response from Slack is not OK.
-// The message is sent to all the channels in the list.
-func (s *Slack) SendBlocks(ctx context.Context, blocksMessage []blocks.Block, channels ...string) error {
-	for _, channel := range channels {
-		message := blocks.BlockMessage{
-			Channel: channel,
-			Blocks:  blocksMessage,
+// Block messages are used to create rich messages with buttons, images, and other elements.
+// Doc https://api.slack.com/reference/messaging/blocks
+// Playground https://app.slack.com/block-kit-builder
+func (s *Slack) SendBlocks(ctx context.Context, blocks []map[string]interface{}) error {
+	for _, re := range s.recipients {
+		message := BlockMessage{
+			Channel: re.Channel,
+			Blocks:  blocks,
 		}
 		jsonMessage, err := json.Marshal(message)
 		if err != nil {
@@ -136,9 +166,14 @@ func (s *Slack) SendBlocks(ctx context.Context, blocksMessage []blocks.Block, ch
 // It returns an error if the message could not be sent,
 // or if the response from Slack is not OK.
 // The message is sent to all the channels in the list.
-func (s *Slack) Send(ctx context.Context, msg blocks.Message, channels ...string) error {
-	for _, ch := range channels {
-		msg.Channel = ch
+func (s *Slack) Send(ctx context.Context, msg string) error {
+	for _, re := range s.recipients {
+		msg := Message{
+			Channel:  re.Channel,
+			Text:     msg,
+			Markdown: true,
+		}
+
 		jsonMessage, err := json.Marshal(msg)
 		if err != nil {
 			return fmt.Errorf("error marshalling message: %w", err)

@@ -8,9 +8,14 @@ repos:
   - repo: https://github.com/tekwizely/pre-commit-golang
     rev: v1.0.0-rc.1
     hooks:
+      - id: go-build-mod
       - id: go-test-mod
+      - id: go-mod-tidy
+      - id: go-test-mod
+      - id: go-sec-mod
       - id: go-fumpt
       - id: go-imports
+      - id: go-vet
   - repo: https://github.com/golangci/golangci-lint
     rev: v1.41.1
     hooks:
