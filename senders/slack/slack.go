@@ -47,8 +47,8 @@ type Recipient struct {
 }
 
 type BlockMessage struct {
-	Channel string                   `json:"channel"`
-	Blocks  []map[string]interface{} `json:"blocks"`
+	Channel string           `json:"channel"`
+	Blocks  []map[string]any `json:"blocks"`
 }
 type Option func(*Slack)
 
@@ -142,7 +142,7 @@ func (s *Slack) send(ctx context.Context, body []byte) error {
 // Block messages are used to create rich messages with buttons, images, and other elements.
 // Doc https://api.slack.com/reference/messaging/blocks
 // Playground https://app.slack.com/block-kit-builder
-func (s *Slack) SendBlocks(ctx context.Context, blocks []map[string]interface{}) error {
+func (s *Slack) SendBlocks(ctx context.Context, blocks []map[string]any) error {
 	for _, re := range s.recipients {
 		message := BlockMessage{
 			Channel: re.Channel,
