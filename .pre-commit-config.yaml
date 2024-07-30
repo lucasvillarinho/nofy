@@ -15,7 +15,6 @@ repos:
       - id: go-sec-mod
       - id: go-fumpt
       - id: go-imports
-      - id: go-vet
   - repo: https://github.com/golangci/golangci-lint
     rev: v1.41.1
     hooks:

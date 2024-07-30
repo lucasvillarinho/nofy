@@ -42,10 +42,12 @@ type Response struct {
 	Error string `json:"error,omitempty"`
 }
 
+// Recipient is a recipient of a message.
 type Recipient struct {
 	Channel string `json:"channel"`
 }
 
+// BlockMessage is a message with blocks to send to Slack.
 type BlockMessage struct {
 	Channel string           `json:"channel"`
 	Blocks  []map[string]any `json:"blocks"`
@@ -119,6 +121,10 @@ func (s *Slack) send(ctx context.Context, body []byte) error {
 		return fmt.Errorf("error sending message: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("error sending message: %s", resp.Status)
+	}
 
 	bodyResponse, err := io.ReadAll(resp.Body)
 	if err != nil {

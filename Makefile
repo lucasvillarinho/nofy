@@ -41,3 +41,7 @@ format:
 	@$(GOFMT) -w $(GO_FILES)
 	@$(GOIMPORTS) -w $(GO_FILES)
 	@echo "Code formatted successfully"
+
+.PHONY: test
+test: ## Run unit test
+	go test -v -coverprofile=rawcover.out -json ./... 2>&1 | tee /tmp/gotest.log | gotestfmt -hide successful-tests,empty-packages
