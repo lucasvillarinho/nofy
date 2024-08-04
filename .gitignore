@@ -26,3 +26,5 @@ go.work.sum
 main.go
 
 /bin
+
+.vscode

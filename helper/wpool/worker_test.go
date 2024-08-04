@@ -2,93 +2,330 @@ package wpool
 
 import (
 	"fmt"
+	"sync"
 	"testing"
+	"time"
 )
 
-func TestCollectResults(t *testing.T) {
-	// Given a worker pool with some results
-	wp := &WorkPool[int, int]{
-		results: make(chan Task[int, int]),
+func TestWorkerStart(t *testing.T) {
+	var wg sync.WaitGroup
+	processFunc := func(input int) (int, error) {
+		return input * 2, nil
 	}
-	t.Run("Collect results from workers", func(t *testing.T) {
-		// given a worker pool with some results
-		go func() {
-			wp.results <- Task[int, int]{ID: "1", Input: 1, Result: 2}
-			wp.results <- Task[int, int]{ID: "2", Input: 2, Result: 4}
-			wp.results <- Task[int, int]{ID: "3", Input: 3, Result: 6}
-			wp.results <- Task[int, int]{ID: "4", Input: 4, Result: 0, Err: fmt.Errorf("some error")}
-			close(wp.results)
-		}()
-		// The expected results are the tasks that succeeded
-		expected := map[string]Task[int, int]{
-			"1": {ID: "1", Input: 1, Result: 2},
-			"2": {ID: "2", Input: 2, Result: 4},
-			"3": {ID: "3", Input: 3, Result: 6},
+	errorFunc := func(input int) (int, error) {
+		return 0, fmt.Errorf("processing error for input %d", input)
+	}
+
+	t.Run("Worker processed result successfully", func(t *testing.T) {
+		jobCh := make(chan *Job[int, int], 1)
+		quitCh := make(chan struct{})
+		resultsCh := make(chan *Job[int, int], 1)
+		errorsCh := make(chan *Job[int, int], 1)
+
+		worker, err := NewWorker[int, int](
+			WithJobChannel[int, int](jobCh),
+			WithProcessFunc[int, int](processFunc),
+			WithQuitChannel[int, int](quitCh),
+			WithWaitGroup[int, int](&wg),
+			WithResultsChannel[int, int](resultsCh),
+			WithErrorsChannel[int, int](errorsCh),
+		)
+		if err != nil {
+			t.Fatalf("Failed to create worker: %v", err)
 		}
 
-		// when we collect the results
-		results := collectResults(wp)
+		worker.start()
 
-		// then we should get the expected results
-		if len(results) != len(expected) {
-			t.Errorf("expected %d results, got %d", len(expected), len(results))
+		testJob := &Job[int, int]{ID: "test-1", Input: 5}
+		jobCh <- testJob
+
+		time.Sleep(100 * time.Millisecond)
+
+		close(quitCh)
+		wg.Wait()
+
+		if testJob.Result != 10 {
+			t.Errorf("Expected result 10, but got %d", testJob.Result)
 		}
 
-		// and the results should match the expected results
-		for _, result := range results {
-			expectedResult, exists := expected[result.ID]
-			if !exists {
-				t.Errorf("unexpected result %+v", result)
-				continue
-			}
-			if result != expectedResult {
-				t.Errorf("expected %+v, got %+v", expectedResult, result)
-			}
+		if testJob.Err != nil {
+			t.Errorf("Expected error nil, but got %v", testJob.Err)
+		}
+	})
+	t.Run("Worker processed result with error", func(t *testing.T) {
+		jobCh := make(chan *Job[int, int], 1)
+		quitCh := make(chan struct{})
+		resultsCh := make(chan *Job[int, int], 1)
+		errorsCh := make(chan *Job[int, int], 1)
+
+		worker, err := NewWorker(
+			WithJobChannel[int, int](jobCh),
+			WithProcessFunc[int, int](errorFunc),
+			WithQuitChannel[int, int](quitCh),
+			WithWaitGroup[int, int](&wg),
+			WithResultsChannel[int, int](resultsCh),
+			WithErrorsChannel[int, int](errorsCh),
+		)
+		if err != nil {
+			t.Fatalf("Failed to create worker: %v", err)
+		}
+
+		worker.start()
+
+		testJob := &Job[int, int]{ID: "test-2", Input: 5}
+		jobCh <- testJob
+
+		time.Sleep(100 * time.Millisecond)
+
+		close(quitCh)
+		wg.Wait()
+
+		if testJob.Result != 0 {
+			t.Errorf("Expected result 0, but got %d", testJob.Result)
+		}
+
+		if testJob.Err == nil {
+			t.Errorf("Expected err not nil, but got nil")
+		}
+
+		if testJob.Err.Error() != "processing error for input 5" {
+			t.Errorf("Expected error message 'processing error for input 5', but got '%s'", testJob.Err.Error())
+		}
+
+	})
+}
+
+
+func TestNewWorker(t *testing.T) {
+	var wg sync.WaitGroup
+
+	processFunc := func(input int) (int, error) {
+		return input * 2, nil
+	}
+
+	t.Run("Worker created successfully", func(t *testing.T) {
+		jobCh := make(chan *Job[int, int], 1)
+		quitCh := make(chan struct{})
+		resultsCh := make(chan *Job[int, int], 1)
+		errorsCh := make(chan *Job[int, int], 1)
+
+		worker, err := NewWorker(
+			WithJobChannel[int, int](jobCh),
+			WithProcessFunc[int, int](processFunc),
+			WithQuitChannel[int, int](quitCh),
+			WithWaitGroup[int, int](&wg),
+			WithResultsChannel[int, int](resultsCh),
+			WithErrorsChannel[int, int](errorsCh),
+		)
+		if err != nil {
+			t.Fatalf("Failed to create worker: %v", err)
+		}
+
+		if worker == nil {
+			t.Fatal("Expected worker to be created, but got nil")
+		}
+	})
+
+	t.Run("Worker creation fails with nil job channel", func(t *testing.T) {
+		_, err := NewWorker[int, int](
+			WithJobChannel[int, int](nil),
+			WithProcessFunc[int, int](processFunc),
+			WithQuitChannel[int, int](make(chan struct{})),
+			WithWaitGroup[int, int](&wg),
+			WithResultsChannel[int, int](make(chan *Job[int, int], 1)),
+			WithErrorsChannel[int, int](make(chan *Job[int, int], 1)),
+		)
+		if err == nil {
+			t.Fatal("Expected error when job channel is nil, but got nil")
+		}
+	})
+
+	t.Run("Worker creation fails with nil process function", func(t *testing.T) {
+		_, err := NewWorker[int, int](
+			WithJobChannel[int, int](make(chan *Job[int, int], 1)),
+			WithProcessFunc[int, int](nil),
+			WithQuitChannel[int, int](make(chan struct{})),
+			WithWaitGroup[int, int](&wg),
+			WithResultsChannel[int, int](make(chan *Job[int, int], 1)),
+			WithErrorsChannel[int, int](make(chan *Job[int, int], 1)),
+		)
+		if err == nil {
+			t.Fatal("Expected error when process function is nil, but got nil")
+		}
+	})
+
+	t.Run("Worker creation fails with nil quit channel", func(t *testing.T) {
+		_, err := NewWorker[int, int](
+			WithJobChannel[int, int](make(chan *Job[int, int], 1)),
+			WithProcessFunc[int, int](processFunc),
+			WithQuitChannel[int, int](nil),
+			WithWaitGroup[int, int](&wg),
+			WithResultsChannel[int, int](make(chan *Job[int, int], 1)),
+			WithErrorsChannel[int, int](make(chan *Job[int, int], 1)),
+		)
+		if err == nil {
+			t.Fatal("Expected error when quit channel is nil, but got nil")
+		}
+	})
+
+	t.Run("Worker creation fails with nil wait group", func(t *testing.T) {
+		_, err := NewWorker[int, int](
+			WithJobChannel[int, int](make(chan *Job[int, int], 1)),
+			WithProcessFunc[int, int](processFunc),
+			WithQuitChannel[int, int](make(chan struct{})),
+			WithWaitGroup[int, int](nil),
+			WithResultsChannel[int, int](make(chan *Job[int, int], 1)),
+			WithErrorsChannel[int, int](make(chan *Job[int, int], 1)),
+		)
+		if err == nil {
+			t.Fatal("Expected error when wait group is nil, but got nil")
+		}
+	})
+
+	t.Run("Worker creation fails with nil results channel", func(t *testing.T) {
+		_, err := NewWorker[int, int](
+			WithJobChannel[int, int](make(chan *Job[int, int], 1)),
+			WithProcessFunc[int, int](processFunc),
+			WithQuitChannel[int, int](make(chan struct{})),
+			WithWaitGroup[int, int](&wg),
+			WithResultsChannel[int, int](nil),
+			WithErrorsChannel[int, int](make(chan *Job[int, int], 1)),
+		)
+		if err == nil {
+			t.Fatal("Expected error when results channel is nil, but got nil")
+		}
+	})
+
+	t.Run("Worker creation fails with nil errors channel", func(t *testing.T) {
+		_, err := NewWorker[int, int](
+			WithJobChannel[int, int](make(chan *Job[int, int], 1)),
+			WithProcessFunc[int, int](processFunc),
+			WithQuitChannel[int, int](make(chan struct{})),
+			WithWaitGroup[int, int](&wg),
+			WithResultsChannel[int, int](make(chan *Job[int, int], 1)),
+			WithErrorsChannel[int, int](nil),
+		)
+		if err == nil {
+			t.Fatal("Expected error when errors channel is nil, but got nil")
 		}
 	})
 }
 
-func TestCollectErrors(t *testing.T) {
-	// When a worker fails to process a task, it should send the task to the errors channel
-	wp := &WorkPool[int, int]{
-		errors: make(chan Task[int, int]),
-	}
-
-	t.Run("Collect errors from workers", func(t *testing.T) {
-		// given a worker pool with some errors
-		go func() {
-			wp.errors <- Task[int, int]{ID: "1", Input: 1, Result: 0, Err: fmt.Errorf("some error 1")}
-			wp.errors <- Task[int, int]{ID: "2", Input: 2, Result: 4}
-			wp.errors <- Task[int, int]{ID: "3", Input: 3, Result: 0, Err: fmt.Errorf("some error 2")}
-			wp.errors <- Task[int, int]{ID: "4", Input: 4, Result: 0, Err: fmt.Errorf("some error 3")}
-			close(wp.errors)
-		}()
-
-		// The expected results are the tasks that failed
-		expected := map[string]Task[int, int]{
-			"1": {ID: "1", Input: 1, Result: 0, Err: fmt.Errorf("some error 1")},
-			"3": {ID: "3", Input: 3, Result: 0, Err: fmt.Errorf("some error 2")},
-			"4": {ID: "4", Input: 4, Result: 0, Err: fmt.Errorf("some error 3")},
+func TestWithProcessFunc(t *testing.T) {
+	t.Run("Returns error when process function is nil", func(t *testing.T) {
+		opt := WithProcessFunc[int, int](nil)
+		worker := &Worker[int, int]{}
+		err := opt(worker)
+		if err == nil {
+			t.Fatal("Expected error, but got nil")
 		}
-
-		// when we collect the errors
-		errors := collectErrors(wp)
-
-		// then we should get the expected results
-		if len(errors) != len(expected) {
-			t.Errorf("expected %d results, got %d", len(expected), len(errors))
+		expectedErr := "process function cannot be nil"
+		if err.Error() != expectedErr {
+			t.Fatalf("Expected error '%s', but got '%s'", expectedErr, err.Error())
 		}
+	})
 
-		// and the results should match the expected results
-		for _, result := range errors {
-			expectedResult, exists := expected[result.ID]
-			if !exists {
-				t.Errorf("unexpected result %+v", result)
-				continue
-			}
-			if result.Err.Error() != expectedResult.Err.Error() {
-				t.Errorf("expected %+v, got %+v", expectedResult, result)
-			}
+	t.Run("Sets process function when it is not nil", func(t *testing.T) {
+		processFunc := func(input int) (int, error) {
+			return input * 2, nil
+		}
+		opt := WithProcessFunc(processFunc)
+		worker := &Worker[int, int]{}
+		err := opt(worker)
+		if err != nil {
+			t.Fatalf("Expected no error, but got '%s'", err.Error())
+		}
+		if worker.process == nil {
+			t.Fatal("Expected process function to be set, but it is nil")
+		}
+	})
+}
+
+
+
+func TestWithQuitChannel(t *testing.T) {
+	t.Run("Returns error when quit channel is nil", func(t *testing.T) {
+		opt := WithQuitChannel[int, int](nil)
+		worker := &Worker[int, int]{}
+		err := opt(worker)
+		if err == nil {
+			t.Fatal("Expected error, but got nil")
+		}
+		expectedErr := "quit channel cannot be nil"
+		if err.Error() != expectedErr {
+			t.Fatalf("Expected error '%s', but got '%s'", expectedErr, err.Error())
+		}
+	})
+
+	t.Run("Sets quit channel when it is not nil", func(t *testing.T) {
+		quitCh := make(chan struct{})
+		opt := WithQuitChannel[int, int](quitCh)
+		worker := &Worker[int, int]{}
+		err := opt(worker)
+		if err != nil {
+			t.Fatalf("Expected no error, but got '%s'", err.Error())
+		}
+		if worker.quit == nil {
+			t.Fatal("Expected quit channel to be set, but it is nil")
+		}
+	})
+}
+
+
+
+func TestWithResultsChannel(t *testing.T) {
+	t.Run("Returns error when results channel is nil", func(t *testing.T) {
+		opt := WithResultsChannel[int, int](nil)
+		worker := &Worker[int, int]{}
+		err := opt(worker)
+		if err == nil {
+			t.Fatal("Expected error, but got nil")
+		}
+		expectedErr := "results channel cannot be nil"
+		if err.Error() != expectedErr {
+			t.Fatalf("Expected error '%s', but got '%s'", expectedErr, err.Error())
+		}
+	})
+
+	t.Run("Sets results channel when it is not nil", func(t *testing.T) {
+		resultsCh := make(chan *Job[int, int])
+		opt := WithResultsChannel(resultsCh)
+		worker := &Worker[int, int]{}
+		err := opt(worker)
+		if err != nil {
+			t.Fatalf("Expected no error, but got '%s'", err.Error())
+		}
+		if worker.results == nil {
+			t.Fatal("Expected results channel to be set, but it is nil")
+		}
+	})
+}
+
+
+func TestWithErrorsChannel(t *testing.T) {
+	t.Run("Returns error when errors channel is nil", func(t *testing.T) {
+		opt := WithErrorsChannel[int, int](nil)
+		worker := &Worker[int, int]{}
+		err := opt(worker)
+		if err == nil {
+			t.Fatal("Expected error, but got nil")
+		}
+		expectedErr := "errors channel cannot be nil"
+		if err.Error() != expectedErr {
+			t.Fatalf("Expected error '%s', but got '%s'", expectedErr, err.Error())
+		}
+	})
+
+	t.Run("Sets errors channel when it is not nil", func(t *testing.T) {
+		errorsCh := make(chan *Job[int, int])
+		opt := WithErrorsChannel(errorsCh)
+		worker := &Worker[int, int]{}
+		err := opt(worker)
+		if err != nil {
+			t.Fatalf("Expected no error, but got '%s'", err.Error())
+		}
+		if worker.errors == nil {
+			t.Fatal("Expected errors channel to be set, but it is nil")
 		}
 	})
 }

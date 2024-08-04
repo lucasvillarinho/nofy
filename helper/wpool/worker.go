@@ -1,123 +1,138 @@
 package wpool
 
 import (
-	"fmt"
+	"errors"
 	"sync"
 )
 
-// Task represents a task to be executed by a worker
-type Task[T any, R any] struct {
+type Job[T any, R any] struct {
 	ID     string
 	Input  T
 	Result R
 	Err    error
 }
 
-// WorkPool Worker represents a worker that executes tasks
-type WorkPool[T any, R any] struct {
-	numWorkers int
-	jobs       chan Task[T, R]
-	results    chan Task[T, R]
-	errors     chan Task[T, R]
-	process    func(T) (R, error)
-	wg         sync.WaitGroup
-	quit       chan struct{}
-	once       sync.Once
+
+type Worker[T any, R any] struct {
+	job     chan *Job[T, R]
+	process func(T) (R, error)
+	quit    chan struct{}
+	results chan<- *Job[T, R]
+	errors  chan<- *Job[T, R]
+	wg *sync.WaitGroup
 }
 
-// NewWorkPool creates a new worker pool
-func NewWorkPool[T any, R any](numWorkers int, process func(T) (R, error)) *WorkPool[T, R] {
-	return &WorkPool[T, R]{
-		numWorkers: numWorkers,
-		jobs:       make(chan Task[T, R]),
-		results:    make(chan Task[T, R]),
-		errors:     make(chan Task[T, R]),
-		process:    process,
-		quit:       make(chan struct{}),
+type Option[T any, R any] func(*Worker[T, R]) error
+
+func NewWorker[T any, R any](opts ...Option[T, R]) (*Worker[T, R], error) {
+	worker := &Worker[T, R]{}
+	for _, opt := range opts {
+		if err := opt(worker); err != nil {
+			return nil, err
+		}
+	}
+
+	if worker.job == nil {
+		return nil, errors.New("job channel is required")
+	}
+	if worker.process == nil {
+		return nil, errors.New("process function is required")
+	}
+	if worker.quit == nil {
+		return nil, errors.New("quit channel is required")
+	}
+	if worker.wg == nil {
+		return nil, errors.New("wait group is required")
+	}
+	if worker.results == nil {
+		return nil, errors.New("results channel is required")
+	}
+	if worker.errors == nil {
+		return nil, errors.New("errors channel is required")
+	}
+
+	return worker, nil
+}
+
+func WithJobChannel[T any, R any](jobCh chan *Job[T, R]) Option[T, R] {
+	return func(w *Worker[T, R]) error {
+		if jobCh == nil {
+			return errors.New("job channel cannot be nil")
+		}
+		w.job = jobCh
+		return nil
 	}
 }
 
-func NewAndStartWorkPool[T any, R any](numWorkers int, process func(T) (R, error)) *WorkPool[T, R] {
-	workPool := NewWorkPool(numWorkers, process)
-	workPool.Start()
-	return workPool
-}
-
-// Start starts the worker pool
-func (wp *WorkPool[T, R]) Start() {
-	for w := 1; w <= wp.numWorkers; w++ {
-		wp.wg.Add(1)
-		go wp.start()
+func WithProcessFunc[T any, R any](process func(T) (R, error)) Option[T, R] {
+	return func(w *Worker[T, R]) error {
+		if process == nil {
+			return errors.New("process function cannot be nil")
+		}
+		w.process = process
+		return nil
 	}
 }
 
-func (wp *WorkPool[T, R]) Stop() {
-	wp.once.Do(func() {
-		close(wp.quit)
-		close(wp.jobs)
-		wp.wg.Wait()
-		close(wp.results)
-		close(wp.errors)
-	})
+func WithQuitChannel[T any, R any](quitCh chan struct{}) Option[T, R] {
+	return func(w *Worker[T, R]) error {
+		if quitCh == nil {
+			return errors.New("quit channel cannot be nil")
+		}
+		w.quit = quitCh
+		return nil
+	}
 }
 
-func (wp *WorkPool[T, R]) AddTask(task Task[T, R]) {
-	wp.jobs <- task
+func WithWaitGroup[T any, R any](wg *sync.WaitGroup) Option[T, R] {
+	return func(w *Worker[T, R]) error {
+		if wg == nil {
+			return errors.New("wait group cannot be nil")
+		}
+		w.wg = wg
+		return nil
+	}
 }
 
-func (wp *WorkPool[T, R]) Results() <-chan Task[T, R] {
-	return wp.results
+func WithResultsChannel[T any, R any](resultsCh chan<- *Job[T, R]) Option[T, R] {
+	return func(w *Worker[T, R]) error {
+		if resultsCh == nil {
+			return errors.New("results channel cannot be nil")
+		}
+		w.results = resultsCh
+		return nil
+	}
 }
 
-func (wp *WorkPool[T, R]) Errors() <-chan Task[T, R] {
-	return wp.errors
+func WithErrorsChannel[T any, R any](errCh chan<- *Job[T, R]) Option[T, R] {
+	return func(w *Worker[T, R]) error {
+		if errCh == nil {
+			return errors.New("errors channel cannot be nil")
+		}
+		w.errors = errCh
+		return nil
+	}
 }
 
-func (wp *WorkPool[T, R]) start() {
-	defer wp.wg.Done()
-	for {
-		select {
-		case <-wp.quit:
-			return
-		case job := <-wp.jobs:
-			result, err := wp.process(job.Input)
-			if err != nil {
-				job.Err = fmt.Errorf("error processing job id: %s err: %w", job.ID, err)
-				wp.errors <- job
-			} else {
-				job.Result = result
-				wp.results <- job
+func (w *Worker[T, R]) start() {
+	w.wg.Add(1)
+
+	go func() {
+		defer w.wg.Done()
+		for {
+			select {
+			case <-w.quit:
+				return
+			case job := <-w.job:
+				output, err := w.process(job.Input)
+				job.Err = err
+				job.Result = output
+				if err != nil {
+					w.errors <- job
+				} else {
+					w.results <- job
+				}
 			}
 		}
-	}
-}
-
-func collectResults[T any, R any](wp *WorkPool[T, R]) []Task[T, R] {
-	var results []Task[T, R]
-	for result := range wp.Results() {
-		if result.Err == nil {
-			results = append(results, result)
-		}
-	}
-	return results
-}
-
-func collectErrors[T any, R any](wp *WorkPool[T, R]) []Task[T, R] {
-	var errors []Task[T, R]
-	for err := range wp.Errors() {
-		if err.Err != nil {
-			errors = append(errors, err)
-		}
-	}
-	return errors
-}
-
-func (wp *WorkPool[T, R]) CollectResultsAndErrors() ([]Task[T, R], []Task[T, R]) {
-	close(wp.jobs)
-	wp.wg.Wait()
-	wp.Stop()
-
-	results := collectResults(wp)
-	errors := collectErrors(wp)
-	return results, errors
+	}()
 }
