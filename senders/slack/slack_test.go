@@ -3,6 +3,7 @@ package slack
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,8 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-
 
 func TestNewSlackClient(t *testing.T) {
 	t.Run("Error when token is empty", func(t *testing.T) {
@@ -24,8 +23,8 @@ func TestNewSlackClient(t *testing.T) {
 	})
 
 	t.Run("Create Slack client with default values", func(t *testing.T) {
-		slack, err := NewSlackClient( "mock-token")
-	
+		slack, err := NewSlackClient("mock-token")
+
 		require.NoError(t, err)
 		assert.Equal(t, "https://slack.com/api/chat.postMessage", slack.url)
 		assert.Equal(t, "mock-token", slack.token)
@@ -34,17 +33,15 @@ func TestNewSlackClient(t *testing.T) {
 	})
 
 	t.Run("Create Slack client with custom timeout", func(t *testing.T) {
-		slack, err := NewSlackClient( "mock-token",WithTimeout(10 * time.Second))
+		slack, err := NewSlackClient("mock-token", WithTimeout(10*time.Second))
 		slack.token = "mock-token"
 
 		require.NoError(t, err)
 		assert.Equal(t, 10*time.Second, slack.timeout)
 	})
-
 }
 
-
-func TestSlackSend(t *testing.T) {
+func TestSlacksend(t *testing.T) {
 	t.Run("Successful message send", func(t *testing.T) {
 		server := mockSlackServer(t, http.StatusOK, Response{OK: true})
 		defer server.Close()
@@ -55,7 +52,10 @@ func TestSlackSend(t *testing.T) {
 			client: server.Client(),
 		}
 
-		err := slack.send(context.Background(), []byte(`{"text":"Hello, world!"}`))
+		err := slack.send(
+			context.Background(),
+			[]byte(`{"text":"Hello, world!"}`),
+		)
 		assert.NoError(t, err)
 	})
 
@@ -66,13 +66,20 @@ func TestSlackSend(t *testing.T) {
 			client: &http.Client{},
 		}
 
-		err := slack.send(context.Background(), []byte(`{"text":"Hello, world!"}`))
+		err := slack.send(
+			context.Background(),
+			[]byte(`{"text":"Hello, world!"}`),
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error creating request")
 	})
 
 	t.Run("Error sending message", func(t *testing.T) {
-		server := mockSlackServer(t, http.StatusInternalServerError, Response{OK: false, Error: "internal_error"})
+		server := mockSlackServer(
+			t,
+			http.StatusInternalServerError,
+			Response{OK: false, Error: "internal_error"},
+		)
 		defer server.Close()
 
 		slack := &Slack{
@@ -81,17 +88,26 @@ func TestSlackSend(t *testing.T) {
 			client: server.Client(),
 		}
 
-		err := slack.send(context.Background(), []byte(`{"text":"Hello, world!"}`))
+		err := slack.send(
+			context.Background(),
+			[]byte(`{"text":"Hello, world!"}`),
+		)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "error sending message: 500 Internal Server Error")
+		assert.Contains(
+			t,
+			err.Error(),
+			"error sending message: 500 Internal Server Error",
+		)
 	})
 
 	t.Run("Error reading response", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte("{invalid json}"))
-		}))
+		server := httptest.NewServer(
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+				w.Write([]byte("{invalid json}"))
+			}),
+		)
 		defer server.Close()
 
 		slack := &Slack{
@@ -100,7 +116,10 @@ func TestSlackSend(t *testing.T) {
 			client: server.Client(),
 		}
 
-		err := slack.send(context.Background(), []byte(`{"text":"Hello, world!"}`))
+		err := slack.send(
+			context.Background(),
+			[]byte(`{"text":"Hello, world!"}`),
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error unmarshalling response")
 	})
@@ -109,21 +128,26 @@ func TestSlackSend(t *testing.T) {
 		server := mockSlackServerWithErrorOnRead(t)
 		defer server.Close()
 
-
 		slack := &Slack{
 			url:    server.URL + "/api/chat.postMessage",
 			token:  "test-token",
 			client: server.Client(),
 		}
 
-
-		err := slack.send(context.Background(), []byte(`{"text":"Hello, world!"}`))
+		err := slack.send(
+			context.Background(),
+			[]byte(`{"text":"Hello, world!"}`),
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error reading response")
 	})
 
 	t.Run("Error in Slack response", func(t *testing.T) {
-		server := mockSlackServer(t, http.StatusOK, Response{OK: false, Error: "invalid_auth"})
+		server := mockSlackServer(
+			t,
+			http.StatusOK,
+			Response{OK: false, Error: "invalid_auth"},
+		)
 		defer server.Close()
 
 		slack := &Slack{
@@ -132,13 +156,14 @@ func TestSlackSend(t *testing.T) {
 			client: server.Client(),
 		}
 
-		err := slack.send(context.Background(), []byte(`{"text":"Hello, world!"}`))
+		err := slack.send(
+			context.Background(),
+			[]byte(`{"text":"Hello, world!"}`),
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error sending message: invalid_auth")
 	})
-	
 }
-
 
 func TestRemoveRecipient(t *testing.T) {
 	t.Run("Existing recipient", func(t *testing.T) {
@@ -199,12 +224,120 @@ func TestAddRecipient(t *testing.T) {
 		s.AddRecipient("channel1")
 		s.AddRecipient("channel2")
 		s.AddRecipient("channel3")
-
 		assert.Equal(t, expectedRecipients, s.recipients)
 	})
 }
 
-func mockSlackServer(t *testing.T, statusCode int, response interface{}) *httptest.Server {
+func TestSendBlocks(t *testing.T) {
+	t.Run("Successful send blocks to multiple recipients", func(t *testing.T) {
+		server := mockSlackServer(t, http.StatusOK, Response{OK: true})
+		defer server.Close()
+
+		slack := &Slack{
+			url:    server.URL + "/api/chat.postMessage",
+			token:  "test-token",
+			client: server.Client(),
+			recipients: []Recipient{
+				{Channel: "channel1"},
+				{Channel: "channel2"},
+			},
+		}
+
+		blocks := []map[string]interface{}{
+			{"type": "section", "text": map[string]string{"type": "mrkdwn", "text": "Hello, world!"}},
+		}
+
+		err := slack.SendBlocks(context.Background(), blocks)
+		require.NoError(t, err)
+	})
+
+	t.Run("Error marshalling message", func(t *testing.T) {
+		slack := &Slack{
+			recipients: []Recipient{
+				{Channel: "channel1"},
+			},
+		}
+
+		blocks := []map[string]interface{}{
+			{"type": "section", "text": make(chan int)}, // Invalid data type for JSON marshalling
+		}
+
+		err := slack.SendBlocks(context.Background(), blocks)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "error marshalling message")
+	})
+
+	t.Run("Error sending message with blocks", func(t *testing.T) {
+		server := mockSlackServer(t, http.StatusInternalServerError, Response{OK: false, Error: "internal_error"})
+		defer server.Close()
+
+		slack := &Slack{
+			url:    server.URL + "/api/chat.postMessage",
+			token:  "test-token",
+			client: server.Client(),
+			recipients: []Recipient{
+				{Channel: "channel1"},
+			},
+		}
+
+		blocks := []map[string]interface{}{
+			{"type": "section", "text": map[string]string{"type": "mrkdwn", "text": "Hello, world!"}},
+		}
+
+		err := slack.SendBlocks(context.Background(), blocks)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "error sending message with blocks")
+	})
+}
+
+func TestSlackSend(t *testing.T) {
+	t.Run("Successful send message", func(t *testing.T) {
+		server := mockSlackServer(t, http.StatusOK, Response{OK: true})
+		defer server.Close()
+
+		slack := &Slack{
+			url:    server.URL + "/api/chat.postMessage",
+			token:  "test-token",
+			client: server.Client(),
+			recipients: []Recipient{
+				{Channel: "channel1"},
+			},
+		}
+
+		err := slack.Send(context.Background(), "Hello, world!")
+		require.NoError(t, err)
+	})
+
+	t.Run("Error sending message with blocks", func(t *testing.T) {
+		server := mockSlackServer(t, http.StatusInternalServerError, Response{OK: false, Error: "internal_error"})
+		defer server.Close()
+
+		slack := &Slack{
+			url:    server.URL + "/api/chat.postMessage",
+			token:  "test-token",
+			client: server.Client(),
+			recipients: []Recipient{
+				{Channel: "channel1"},
+			},
+		}
+
+		err := slack.Send(context.Background(), "Hello, world!")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "error sending message with blocks")
+	})
+}
+
+type mockHTTPClient struct{}
+
+func (c *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	return nil, errors.New("mock client error")
+}
+
+func mockSlackServer(
+	t *testing.T,
+	statusCode int,
+	response interface{},
+) *httptest.Server {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/chat.postMessage", r.URL.Path)
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))

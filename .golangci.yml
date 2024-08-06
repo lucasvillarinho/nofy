@@ -1,7 +1,7 @@
 run:
   timeout: 5m
   tests: true
-
+  
 linters:
   enable:
     - errcheck
@@ -20,3 +20,4 @@ issues:
     - path: vendor/.*
       linters:
         - govet
+        

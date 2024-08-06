@@ -21,7 +21,7 @@ type Slack struct {
 	token      string
 	timeout    time.Duration
 	recipients []Recipient
-	client      *http.Client
+	client     *http.Client
 }
 
 // Message is the message to send to Slack.
@@ -53,18 +53,15 @@ type Option func(*Slack)
 
 // NewSlackClient creates a new Slack client.
 func NewSlackClient(token string, options ...Option) (*Slack, error) {
-
 	if len(strings.TrimSpace(token)) == 0 {
 		return nil, fmt.Errorf("missing Slack token")
 	}
-	
 
 	slack := &Slack{
 		url:        "https://slack.com/api/chat.postMessage",
 		token:      token,
 		timeout:    timeout * time.Millisecond,
 		recipients: make([]Recipient, 0),
-		
 	}
 
 	for _, opt := range options {
@@ -100,7 +97,12 @@ func (s *Slack) RemoveRecipient(channel string) {
 // It returns an error if the message could not be sent,
 // or if the response from Slack is not OK.
 func (s *Slack) send(ctx context.Context, body []byte) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.url, bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		s.url,
+		bytes.NewBuffer(body),
+	)
 	if err != nil {
 		return fmt.Errorf("error creating request: %w", err)
 	}
@@ -146,10 +148,11 @@ func (s *Slack) send(ctx context.Context, body []byte) error {
 // Doc https://api.slack.com/reference/messaging/blocks
 // Playground https://app.slack.com/block-kit-builder
 func (s *Slack) SendBlocks(ctx context.Context, blocks []map[string]any) error {
-	for _, re := range s.recipients {
-		pool := pool.New(len(s.recipients), len(s.recipients))
-		group, ctx := pool.GroupContext(ctx)
+	pool := pool.New(len(s.recipients), len(s.recipients))
+	group, ctx := pool.GroupContext(ctx)
 
+	for _, re := range s.recipients {
+		re := re
 		group.Submit(func() error {
 			message := BlockMessage{
 				Channel: re.Channel,
@@ -168,42 +171,27 @@ func (s *Slack) SendBlocks(ctx context.Context, blocks []map[string]any) error {
 		})
 	}
 
+	err := group.Wait()
+	if err != nil {
+		return fmt.Errorf("error sending message with blocks: %w", err)
+	}
+
 	return nil
 }
-
 
 // Send asynchronously sends a message to all recipients.
 // It returns an error if the message could not be sent.
 func (s *Slack) Send(ctx context.Context, msg string) error {
-	pool := pool.New(len(s.recipients), len(s.recipients))
-
-	group, ctx := pool.GroupContext(ctx)
-
-	for _, re := range s.recipients {
-		group.Submit(func() error {
-			message := Message{
-				Channel:  re.Channel,
-				Text:     msg,
-				Markdown: true,
-			}
-
-			jsonMessage, err := json.Marshal(message)
-			if err != nil {
-				return fmt.Errorf("error marshalling message for channel %s: %w", re.Channel, err)
-			}
-
-			err = s.send(ctx, jsonMessage)
-			if err != nil {
-				return fmt.Errorf("error sending message to channel %s: %w", re.Channel, err)
-			}
-			return nil
-		})
+	msgBlock := []map[string]any{
+		{
+			"type": "section",
+			"text": map[string]any{
+				"type":  "mrkdwn",
+				"text":  msg,
+				"emoji": true,
+			},
+		},
 	}
 
-	err := group.Wait()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.SendBlocks(ctx, msgBlock)
 }

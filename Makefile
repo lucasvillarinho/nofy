@@ -38,10 +38,12 @@ lint: build ## Run lint
 .PHONY: format
 format:
 	@echo "Formatting code..."
-	@$(GOFMT) -w $(GO_FILES)
-	@$(GOIMPORTS) -w $(GO_FILES)
+	@gofumpt -w .
+	@goimports -w .
+	@golines -m 80 -w .
 	@echo "Code formatted successfully"
 
+	
 .PHONY: test
 test: ## Run unit test
 	go test -v -coverprofile=rawcover.out -json ./... 2>&1 | tee /tmp/gotest.log | gotestfmt -hide successful-tests,empty-packages
