@@ -118,7 +118,6 @@ func TestSlackSend(t *testing.T) {
 
 
 		err := slack.send(context.Background(), []byte(`{"text":"Hello, world!"}`))
-		
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error reading response")
 	})
@@ -134,7 +133,6 @@ func TestSlackSend(t *testing.T) {
 		}
 
 		err := slack.send(context.Background(), []byte(`{"text":"Hello, world!"}`))
-		
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error sending message: invalid_auth")
 	})
