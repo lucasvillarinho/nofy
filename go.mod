@@ -4,7 +4,6 @@ go 1.22.5
 
 require (
 	github.com/alitto/pond v1.9.1
-	github.com/caarlos0/env/v11 v11.1.0
 	github.com/stretchr/testify v1.9.0
 )
 
