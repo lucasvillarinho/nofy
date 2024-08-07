@@ -22,6 +22,7 @@ type Slack struct {
 	timeout    time.Duration
 	recipients []Recipient
 	client     *http.Client
+	Message    []map[string]any
 }
 
 // Message is the message to send to Slack.
@@ -147,7 +148,7 @@ func (s *Slack) send(ctx context.Context, body []byte) error {
 // Block messages are used to create rich messages with buttons, images, and other elements.
 // Doc https://api.slack.com/reference/messaging/blocks
 // Playground https://app.slack.com/block-kit-builder
-func (s *Slack) SendBlocks(ctx context.Context, blocks []map[string]any) error {
+func (s *Slack) Send(ctx context.Context) error {
 	pool := pool.New(len(s.recipients), len(s.recipients))
 	group, ctx := pool.GroupContext(ctx)
 
@@ -156,7 +157,7 @@ func (s *Slack) SendBlocks(ctx context.Context, blocks []map[string]any) error {
 		group.Submit(func() error {
 			message := BlockMessage{
 				Channel: re.Channel,
-				Blocks:  blocks,
+				Blocks:  s.Message,
 			}
 			jsonMessage, err := json.Marshal(message)
 			if err != nil {
@@ -179,19 +180,12 @@ func (s *Slack) SendBlocks(ctx context.Context, blocks []map[string]any) error {
 	return nil
 }
 
-// Send asynchronously sends a message to all recipients.
-// It returns an error if the message could not be sent.
-func (s *Slack) Send(ctx context.Context, msg string) error {
-	msgBlock := []map[string]any{
-		{
-			"type": "section",
-			"text": map[string]any{
-				"type":  "mrkdwn",
-				"text":  msg,
-				"emoji": true,
-			},
-		},
+// AddMessage adds a message to the list of messages.
+func (s *Slack) AddMessage(message any) error {
+	msg, ok := message.([]map[string]any)
+	if !ok {
+		return fmt.Errorf("invalid message type")
 	}
-
-	return s.SendBlocks(ctx, msgBlock)
+	s.Message = msg
+	return nil
 }
