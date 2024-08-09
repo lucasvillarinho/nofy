@@ -7,29 +7,27 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	pool "github.com/alitto/pond"
+
+	"github.com/lucasvillarinho/nofy/models"
 )
 
-const timeout = 5000
+const Timeout = 5000
+
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
 
 // Slack is a client to send messages to Slack.
 type Slack struct {
-	url        string
-	token      string
-	timeout    time.Duration
-	recipients []Recipient
-	client     *http.Client
+	URL        string
+	Token      string
+	Timeout    time.Duration
+	Recipients []Recipient
+	Client     HTTPClient
 	Message    []map[string]any
-}
-
-// Message is the message to send to Slack.
-type Message struct {
-	Channel  string `json:"channel"`
-	Text     string `json:"text"`
-	Markdown bool   `json:"mrkdwn"`
 }
 
 // Response is the response from Slack.
@@ -53,106 +51,116 @@ type BlockMessage struct {
 type Option func(*Slack)
 
 // NewSlackClient creates a new Slack client.
-func NewSlackClient(token string, options ...Option) (*Slack, error) {
-	if len(strings.TrimSpace(token)) == 0 {
-		return nil, fmt.Errorf("missing Slack token")
-	}
-
+func NewSlackClient(options ...Option) (models.Sender, error) {
 	slack := &Slack{
-		url:        "https://slack.com/api/chat.postMessage",
-		token:      token,
-		timeout:    timeout * time.Millisecond,
-		recipients: make([]Recipient, 0),
+		URL:        "https://slack.com/api/chat.postMessage",
+		Timeout:    Timeout * time.Millisecond,
+		Recipients: make([]Recipient, 0),
 	}
 
 	for _, opt := range options {
 		opt(slack)
 	}
 
+	if slack.Token == "" {
+		return nil, fmt.Errorf("missing Slack Token")
+	}
+	if slack.Recipients == nil || len(slack.Recipients) == 0 {
+		return nil, fmt.Errorf("missing Slack Recipients")
+	}
+	if slack.Timeout == 0 {
+		return nil, fmt.Errorf("missing Timeout")
+	}
+	if slack.Message == nil || len(slack.Message) == 0 {
+		return nil, fmt.Errorf("missing Slack message")
+	}
+
 	return slack, nil
 }
 
-// WithTimeout sets the timeout for the Slack client.
-func WithTimeout(timeout time.Duration) Option {
+// WithToken sets the Token for the Slack client.
+func WithToken(Token string) Option {
 	return func(s *Slack) {
-		s.timeout = timeout
+		s.Token = Token
 	}
 }
 
-// AddRecipient adds a recipient to the list of recipients.
-func (s *Slack) AddRecipient(channel string) {
-	s.recipients = append(s.recipients, Recipient{Channel: channel})
+// WithTimeout sets the Timeout for the Slack client.
+func WithTimeout(Timeout time.Duration) Option {
+	return func(s *Slack) {
+		s.Timeout = Timeout
+	}
 }
 
-// RemoveRecipient removes a recipient from the list of recipients.
-func (s *Slack) RemoveRecipient(channel string) {
-	for i, recipient := range s.recipients {
-		if recipient.Channel == channel {
-			s.recipients = append(s.recipients[:i], s.recipients[i+1:]...)
-			return
-		}
+// WithRecipients sets the Recipients for the Slack client.
+func WithRecipients(Recipients []Recipient) Option {
+	return func(s *Slack) {
+		s.Recipients = Recipients
+	}
+}
+
+// WithMessage sets the message for the Slack client.
+func WithMessage(message []map[string]any) Option {
+	return func(s *Slack) {
+		s.Message = message
 	}
 }
 
 // Send sends a message to a Slack channel.
 // It returns an error if the message could not be sent,
 // or if the response from Slack is not OK.
-func (s *Slack) send(ctx context.Context, body []byte) error {
+func (s *Slack) send(ctx context.Context, body []byte) (*Response, error) {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		s.url,
+		s.URL,
 		bytes.NewBuffer(body),
 	)
 	if err != nil {
-		return fmt.Errorf("error creating request: %w", err)
+		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+s.token)
+	req.Header.Set("Authorization", "Bearer "+s.Token)
 
-	client := s.client
+	client := s.Client
 	if client == nil {
 		client = &http.Client{}
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("error sending message: %w", err)
+		return nil, fmt.Errorf("error sending message: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("error sending message: %s", resp.Status)
+		return nil, fmt.Errorf("error sending message: %s", resp.Status)
 	}
 
 	bodyResponse, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("error reading response: %w", err)
+		return nil, fmt.Errorf("error reading response: %w", err)
 	}
 
 	var slackResponse Response
 	err = json.Unmarshal(bodyResponse, &slackResponse)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling response: %w", err)
+		return nil, fmt.Errorf("error unmarshalling response: %w", err)
 	}
 
-	if !slackResponse.OK {
-		return fmt.Errorf("error sending message: %s", slackResponse.Error)
-	}
-
-	return nil
+	return &slackResponse, nil
 }
 
-// SendBlocks sends a message with blocks to a Slack channel.
+// Send sends a message with blocks to a Slack channel.
 // Block messages are used to create rich messages with buttons, images, and other elements.
 // Doc https://api.slack.com/reference/messaging/blocks
 // Playground https://app.slack.com/block-kit-builder
 func (s *Slack) Send(ctx context.Context) error {
-	pool := pool.New(len(s.recipients), len(s.recipients))
+	pool := pool.New(len(s.Recipients), len(s.Recipients))
 	group, ctx := pool.GroupContext(ctx)
 
-	for _, re := range s.recipients {
+	for _, re := range s.Recipients {
 		re := re
 		group.Submit(func() error {
 			message := BlockMessage{
@@ -164,10 +172,18 @@ func (s *Slack) Send(ctx context.Context) error {
 				return fmt.Errorf("error marshalling message: %w", err)
 			}
 
-			err = s.send(ctx, jsonMessage)
+			slackResponse, err := s.send(ctx, jsonMessage)
 			if err != nil {
 				return fmt.Errorf("error sending message with blocks: %w", err)
 			}
+
+			if !slackResponse.OK {
+				return fmt.Errorf(
+					"error sending message with blocks: %s",
+					slackResponse.Error,
+				)
+			}
+
 			return nil
 		})
 	}
@@ -177,15 +193,5 @@ func (s *Slack) Send(ctx context.Context) error {
 		return fmt.Errorf("error sending message with blocks: %w", err)
 	}
 
-	return nil
-}
-
-// AddMessage adds a message to the list of messages.
-func (s *Slack) AddMessage(message any) error {
-	msg, ok := message.([]map[string]any)
-	if !ok {
-		return fmt.Errorf("invalid message type")
-	}
-	s.Message = msg
 	return nil
 }
