@@ -48,22 +48,6 @@ func TestNewSlackClient(t *testing.T) {
 			wantErr: fmt.Errorf("missing Slack Token"),
 		},
 		{
-			name: "missing recipients",
-			options: []Option{
-				WithToken("test-token"),
-				WithMessage([]map[string]any{{"text": "Test message"}}),
-			},
-			wantErr: fmt.Errorf("missing Slack Recipients"),
-		},
-		{
-			name: "missing message",
-			options: []Option{
-				WithToken("test-token"),
-				WithRecipients([]Recipient{{}}),
-			},
-			wantErr: fmt.Errorf("missing Slack message"),
-		},
-		{
 			name: "missing timeout",
 			options: []Option{
 				WithTimeout(0),
@@ -252,7 +236,11 @@ func TestSend(t *testing.T) {
 
 		err := s.Send(context.Background())
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "error marshalling message")
+		assert.Equal(
+			t,
+			"error marshalling message: json: unsupported type: chan int",
+			err.Error(),
+		)
 	})
 
 	t.Run("Slack response with error", func(t *testing.T) {
@@ -285,10 +273,10 @@ func TestSend(t *testing.T) {
 
 		err := s.Send(context.Background())
 		assert.Error(t, err)
-		assert.Contains(
+		assert.Equal(
 			t,
+			"error sending message: invalid_auth",
 			err.Error(),
-			"error sending message with blocks: invalid_auth",
 		)
 	})
 
@@ -311,6 +299,6 @@ func TestSend(t *testing.T) {
 
 		err := s.Send(ctx)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "error sending message with blocks")
+		assert.Equal(t, "context canceled", err.Error())
 	})
 }

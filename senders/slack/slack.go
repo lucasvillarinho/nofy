@@ -11,7 +11,8 @@ import (
 
 	pool "github.com/alitto/pond"
 
-	"github.com/lucasvillarinho/nofy/models"
+	"github.com/lucasvillarinho/nofy"
+	"github.com/lucasvillarinho/nofy/helpers"
 )
 
 const Timeout = 5000
@@ -22,10 +23,11 @@ type HTTPClient interface {
 
 // Slack is a client to send messages to Slack.
 type Slack struct {
+	ID         string
 	URL        string
 	Token      string
 	Timeout    time.Duration
-	Recipients []Recipient
+	Recipients []string
 	Client     HTTPClient
 	Message    []map[string]any
 }
@@ -38,11 +40,6 @@ type Response struct {
 	Error string `json:"error,omitempty"`
 }
 
-// Recipient is a recipient of a message.
-type Recipient struct {
-	Channel string `json:"channel"`
-}
-
 // BlockMessage is a message with blocks to send to Slack.
 type BlockMessage struct {
 	Channel string           `json:"channel"`
@@ -51,11 +48,12 @@ type BlockMessage struct {
 type Option func(*Slack)
 
 // NewSlackClient creates a new Slack client.
-func NewSlackClient(options ...Option) (models.Sender, error) {
+func NewSlackClient(options ...Option) (nofy.Sender, error) {
 	slack := &Slack{
+		ID:         "slack-sender-" + helpers.GenerateUUID(),
 		URL:        "https://slack.com/api/chat.postMessage",
 		Timeout:    Timeout * time.Millisecond,
-		Recipients: make([]Recipient, 0),
+		Recipients: make([]string, 0),
 	}
 
 	for _, opt := range options {
@@ -65,14 +63,8 @@ func NewSlackClient(options ...Option) (models.Sender, error) {
 	if slack.Token == "" {
 		return nil, fmt.Errorf("missing Slack Token")
 	}
-	if slack.Recipients == nil || len(slack.Recipients) == 0 {
-		return nil, fmt.Errorf("missing Slack Recipients")
-	}
 	if slack.Timeout == 0 {
 		return nil, fmt.Errorf("missing Timeout")
-	}
-	if slack.Message == nil || len(slack.Message) == 0 {
-		return nil, fmt.Errorf("missing Slack message")
 	}
 
 	return slack, nil
@@ -92,18 +84,34 @@ func WithTimeout(Timeout time.Duration) Option {
 	}
 }
 
-// WithRecipients sets the Recipients for the Slack client.
-func WithRecipients(Recipients []Recipient) Option {
-	return func(s *Slack) {
-		s.Recipients = Recipients
-	}
+func (s *Slack) GetId() string {
+	return s.ID
 }
 
-// WithMessage sets the message for the Slack client.
-func WithMessage(message []map[string]any) Option {
-	return func(s *Slack) {
-		s.Message = message
+// RemoveRecipient removes a recipient from the Slack client.
+func (s *Slack) RemoveRecipient(recipient any) error {
+	recipient, ok := recipient.(string)
+	if !ok {
+		return fmt.Errorf("invalid recipient")
 	}
+
+	for i, r := range s.Recipients {
+		if r == recipient {
+			s.Recipients = append(s.Recipients[:i], s.Recipients[i+1:]...)
+			return nil
+		}
+	}
+	return nil
+}
+
+// AddRecipient adds a recipient to the Slack client.
+func (s *Slack) AddRecipient(recipient any) error {
+	r, ok := recipient.(string)
+	if !ok {
+		return fmt.Errorf("invalid recipient")
+	}
+	s.Recipients = append(s.Recipients, r)
+	return nil
 }
 
 // Send sends a message to a Slack channel.
@@ -160,11 +168,11 @@ func (s *Slack) Send(ctx context.Context) error {
 	pool := pool.New(len(s.Recipients), len(s.Recipients))
 	group, ctx := pool.GroupContext(ctx)
 
-	for _, re := range s.Recipients {
-		re := re
+	for _, channel := range s.Recipients {
+		channel := channel
 		group.Submit(func() error {
 			message := BlockMessage{
-				Channel: re.Channel,
+				Channel: channel,
 				Blocks:  s.Message,
 			}
 			jsonMessage, err := json.Marshal(message)
@@ -174,23 +182,22 @@ func (s *Slack) Send(ctx context.Context) error {
 
 			slackResponse, err := s.send(ctx, jsonMessage)
 			if err != nil {
-				return fmt.Errorf("error sending message with blocks: %w", err)
+				return fmt.Errorf("error sending message: %w", err)
 			}
 
 			if !slackResponse.OK {
 				return fmt.Errorf(
-					"error sending message with blocks: %s",
+					"error sending message: %s",
 					slackResponse.Error,
 				)
 			}
-
 			return nil
 		})
 	}
 
 	err := group.Wait()
 	if err != nil {
-		return fmt.Errorf("error sending message with blocks: %w", err)
+		return err
 	}
 
 	return nil

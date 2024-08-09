@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/images/logo.png" alt="nofylogo logo"></p>
+
 # 📬 nofy
 
 A versatile library and CLI for sending notifications to popular services such as Slack, Discord, Resend, and more

@@ -1,26 +1,27 @@
-package main
+package nofy
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/lucasvillarinho/nofy/models"
+	pool "github.com/alitto/pond"
 )
 
 type Nofy struct {
-	senders []models.Sender
+	senders []Sender
 }
 
 func NewNofy() *Nofy {
 	return &Nofy{
-		senders: make([]models.Sender, 0),
+		senders: make([]Sender, 0),
 	}
 }
 
-func (n *Nofy) AddSender(s models.Sender) {
+func (n *Nofy) AddSender(s Sender) {
 	n.senders = append(n.senders, s)
 }
 
-func (n *Nofy) RemoveSender(s models.Sender) {
+func (n *Nofy) RemoveSender(s Sender) {
 	for i, sender := range n.senders {
 		if sender == s {
 			n.senders = append(n.senders[:i], n.senders[i+1:]...)
@@ -29,8 +30,28 @@ func (n *Nofy) RemoveSender(s models.Sender) {
 	}
 }
 
-func (n *Nofy) Send(ctx context.Context, message any) {
+func (n *Nofy) Send(ctx context.Context) error {
+	pool := pool.New(len(n.senders), len(n.senders))
+	group, ctx := pool.GroupContext(ctx)
+
 	for _, sender := range n.senders {
-		sender.Send(ctx)
+		group.Submit(func() error {
+			err := sender.Send(ctx)
+			if err != nil {
+				return fmt.Errorf(
+					"error sending message senderID: %s err: %v",
+					sender.GetId(),
+					err,
+				)
+			}
+
+			return nil
+		})
 	}
+	err := group.Wait()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
