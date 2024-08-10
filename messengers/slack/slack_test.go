@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
@@ -30,52 +29,60 @@ func (r *FailingReader) Read(p []byte) (n int, err error) {
 
 func TestNewSlackClient(t *testing.T) {
 	t.Run("Missing Token", func(t *testing.T) {
-		_, err := NewSlackClient(
+		_, err := NewSlackMensseger(
 			WithTimeout(5*time.Second),
-			WithMessage([]map[string]any{
-				{
-					"type": "section",
-					"text": map[string]string{
-						"type": "mrkdwn",
-						"text": "Hello, World!",
+			WithMessage(
+				Message{
+					Channel: "test-channel",
+					Content: []map[string]any{
+						{
+							"type": "section",
+							"text": map[string]string{
+								"type": "mrkdwn",
+								"text": "Hello, World!",
+							},
+						},
 					},
-				},
-			}),
+				}),
 		)
 
 		assert.AreEqualErrs(
 			t,
 			err,
-			errors.New("missing Slack Token"),
+			errors.New("missing token"),
 			"Expected missing Slack Token error",
 		)
 	})
 
 	t.Run("Invalid Timeout", func(t *testing.T) {
-		_, err := NewSlackClient(
+		_, err := NewSlackMensseger(
 			WithToken("test-token"),
 			WithTimeout(0),
-			WithMessage([]map[string]any{
-				{
-					"type": "section",
-					"text": map[string]string{
-						"type": "mrkdwn",
-						"text": "Hello, World!",
+			WithMessage(
+				Message{
+					Channel: "test-channel",
+					Content: []map[string]any{
+						{
+							"type": "section",
+							"text": map[string]string{
+								"type": "mrkdwn",
+								"text": "Hello, World!",
+							},
+						},
 					},
-				},
-			}),
+				}),
 		)
 
 		assert.AreEqual(
 			t,
 			err,
-			errors.New("missing Timeout"),
+			errors.New("missing timeout"),
 			"Expected missing Timeout error",
 		)
 	})
 
-	t.Run("Missing Message", func(t *testing.T) {
-		_, err := NewSlackClient(
+	t.Run("Missing channel", func(t *testing.T) {
+		_, err := NewSlackMensseger(
 			WithToken("test-token"),
 			WithTimeout(5*time.Second),
 		)
@@ -83,24 +90,28 @@ func TestNewSlackClient(t *testing.T) {
 		assert.AreEqualErrs(
 			t,
 			err,
-			errors.New("missing Message"),
+			errors.New("missing channel"),
 			"Expected missing Message error",
 		)
 	})
 
 	t.Run("Successful client creation", func(t *testing.T) {
-		slackClient, err := NewSlackClient(
+		slackClient, err := NewSlackMensseger(
 			WithToken("test-token"),
 			WithTimeout(5*time.Second),
-			WithMessage([]map[string]any{
-				{
-					"type": "section",
-					"text": map[string]string{
-						"type": "mrkdwn",
-						"text": "Hello, World!",
+			WithMessage(
+				Message{
+					Channel: "test-channel",
+					Content: []map[string]any{
+						{
+							"type": "section",
+							"text": map[string]string{
+								"type": "mrkdwn",
+								"text": "Hello, World!",
+							},
+						},
 					},
-				},
-			}),
+				}),
 		)
 
 		assert.AreEqual(
@@ -138,22 +149,6 @@ func TestSlackOptions(t *testing.T) {
 			"Expected timeout to be 10s",
 		)
 	})
-
-	t.Run("WithMessage option", func(t *testing.T) {
-		message := []map[string]any{
-			{
-				"type": "section",
-				"text": map[string]string{
-					"type": "mrkdwn",
-					"text": "Hello, World!",
-				},
-			},
-		}
-		slack := &Slack{}
-		WithMessage(message)(slack)
-
-		assert.IsNotNil(t, "Expected message to be not nil")
-	})
 }
 
 func TestSlacksend(t *testing.T) {
@@ -163,7 +158,7 @@ func TestSlacksend(t *testing.T) {
 				respBody := `{"ok": true}`
 				return &http.Response{
 					StatusCode: http.StatusOK,
-					Body: ioutil.NopCloser(
+					Body: io.NopCloser(
 						bytes.NewBufferString(respBody),
 					),
 					Header: make(http.Header),
@@ -333,7 +328,7 @@ func TestSlacksend(t *testing.T) {
 	})
 }
 
-func TestSlack_Send(t *testing.T) {
+func TestSlackSend(t *testing.T) {
 	t.Run("Successful message send", func(t *testing.T) {
 		mockClient := &MockHTTPClient{
 			DoFunc: func(req *http.Request) (*http.Response, error) {
@@ -345,13 +340,18 @@ func TestSlack_Send(t *testing.T) {
 				}, nil
 			},
 		}
-
 		slack := &Slack{
 			Client: mockClient,
-			Message: []map[string]any{
-				{
-					"type": "section",
-					"text": "Hello, World!",
+			Message: Message{
+				Channel: "test-channel",
+				Content: []map[string]any{
+					{
+						"type": "section",
+						"text": map[string]string{
+							"type": "mrkdwn",
+							"text": "Hello, World!",
+						},
+					},
 				},
 			},
 		}
@@ -363,9 +363,12 @@ func TestSlack_Send(t *testing.T) {
 
 	t.Run("Error marshalling message", func(t *testing.T) {
 		slack := &Slack{
-			Message: []map[string]any{
-				{
-					"type": func() {},
+			Message: Message{
+				Channel: "test-channel",
+				Content: []map[string]any{
+					{
+						"type": func() {},
+					},
 				},
 			},
 		}
@@ -386,10 +389,16 @@ func TestSlack_Send(t *testing.T) {
 		}
 		slack := &Slack{
 			Client: mockClient,
-			Message: []map[string]any{
-				{
-					"type": "section",
-					"text": "Hello, World!",
+			Message: Message{
+				Channel: "test-channel",
+				Content: []map[string]any{
+					{
+						"type": "section",
+						"text": map[string]string{
+							"type": "mrkdwn",
+							"text": "Hello, World!",
+						},
+					},
 				},
 			},
 		}
@@ -418,10 +427,16 @@ func TestSlack_Send(t *testing.T) {
 		}
 		slack := &Slack{
 			Client: mockClient,
-			Message: []map[string]any{
-				{
-					"type": "section",
-					"text": "Hello, World!",
+			Message: Message{
+				Channel: "test-channel",
+				Content: []map[string]any{
+					{
+						"type": "section",
+						"text": map[string]string{
+							"type": "mrkdwn",
+							"text": "Hello, World!",
+						},
+					},
 				},
 			},
 		}

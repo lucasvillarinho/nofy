@@ -6,20 +6,18 @@ import (
 	"testing"
 )
 
-// Equal asserts that two values are equal.
-// If the values are not equal, it logs an error and fails the test.
-func AreEqual[V comparable](
+func AreEqual(
 	t *testing.T,
-	got, expected V,
+	got, expected interface{},
 	msgAndArgs ...interface{},
 ) {
 	t.Helper()
 	if !reflect.DeepEqual(expected, got) {
 		message := formatMessage(msgAndArgs...)
 		t.Errorf(`assert.Equal failed:
-Got:      %v (type %T)
-Expected: %v (type %T)
-%s`, got, got, expected, expected, message)
+			Got:      %v (type %T)
+			Expected: %v (type %T)
+			%s`, got, got, expected, expected, message)
 	}
 }
 
@@ -73,7 +71,6 @@ func IsNil(t *testing.T, value any, msgAndArgs ...interface{}) {
 	}
 }
 
-// copied from https://github.com/matryer/is
 func isNil(object any) bool {
 	if object == nil {
 		return true

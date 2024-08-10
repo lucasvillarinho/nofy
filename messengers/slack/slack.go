@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lucasvillarinho/nofy/nofy"
+	"github.com/lucasvillarinho/nofy"
 )
 
 const Timeout = 5000
@@ -25,7 +25,13 @@ type Slack struct {
 	Token   string
 	Timeout time.Duration
 	Client  HTTPClient
-	Message []map[string]any
+	Message Message
+}
+
+// Message is the message to send to Slack.
+type Message struct {
+	Channel string           `json:"channel"`
+	Content []map[string]any `json:"blocks"`
 }
 
 // Response is the response from Slack.
@@ -36,16 +42,10 @@ type Response struct {
 	Error string `json:"error,omitempty"`
 }
 
-// BlockMessage is a message with blocks to send to Slack.
-type BlockMessage struct {
-	Channel string           `json:"channel"`
-	Blocks  []map[string]any `json:"blocks"`
-}
-
 type Option func(*Slack)
 
 // NewSlackClient creates a new Slack client.
-func NewSlackClient(options ...Option) (nofy.Messenger, error) {
+func NewSlackMensseger(options ...Option) (nofy.Messenger, error) {
 	slack := &Slack{
 		URL:     "https://slack.com/api/chat.postMessage",
 		Timeout: Timeout * time.Millisecond,
@@ -56,36 +56,39 @@ func NewSlackClient(options ...Option) (nofy.Messenger, error) {
 	}
 
 	if len(strings.TrimSpace(slack.Token)) == 0 {
-		return nil, fmt.Errorf("missing Slack Token")
+		return nil, fmt.Errorf("missing token")
 	}
 	if slack.Timeout == 0 {
-		return nil, fmt.Errorf("missing Timeout")
+		return nil, fmt.Errorf("missing timeout")
 	}
-	if slack.Message == nil {
-		return nil, fmt.Errorf("missing Message")
+	if len(strings.TrimSpace(slack.Message.Channel)) == 0 {
+		return nil, fmt.Errorf("missing channel")
+	}
+	if slack.Message.Content == nil {
+		return nil, fmt.Errorf("missing content")
 	}
 
 	return slack, nil
 }
 
 // WithToken sets the Token for the Slack client.
-func WithToken(Token string) Option {
+func WithToken(token string) Option {
 	return func(s *Slack) {
-		s.Token = Token
+		s.Token = token
 	}
 }
 
 // WithTimeout sets the Timeout for the Slack client.
-func WithTimeout(Timeout time.Duration) Option {
+func WithTimeout(timeout time.Duration) Option {
 	return func(s *Slack) {
-		s.Timeout = Timeout
+		s.Timeout = timeout
 	}
 }
 
 // WithMessage sets the Message for the Slack client.
-func WithMessage(Message []map[string]any) Option {
+func WithMessage(message Message) Option {
 	return func(s *Slack) {
-		s.Message = Message
+		s.Message = message
 	}
 }
 
