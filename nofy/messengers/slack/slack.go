@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/lucasvillarinho/nofy/nofy"
@@ -40,6 +41,7 @@ type BlockMessage struct {
 	Channel string           `json:"channel"`
 	Blocks  []map[string]any `json:"blocks"`
 }
+
 type Option func(*Slack)
 
 // NewSlackClient creates a new Slack client.
@@ -53,11 +55,14 @@ func NewSlackClient(options ...Option) (nofy.Messenger, error) {
 		opt(slack)
 	}
 
-	if slack.Token == "" {
+	if len(strings.TrimSpace(slack.Token)) == 0 {
 		return nil, fmt.Errorf("missing Slack Token")
 	}
 	if slack.Timeout == 0 {
 		return nil, fmt.Errorf("missing Timeout")
+	}
+	if slack.Message == nil {
+		return nil, fmt.Errorf("missing Message")
 	}
 
 	return slack, nil
@@ -74,6 +79,13 @@ func WithToken(Token string) Option {
 func WithTimeout(Timeout time.Duration) Option {
 	return func(s *Slack) {
 		s.Timeout = Timeout
+	}
+}
+
+// WithMessage sets the Message for the Slack client.
+func WithMessage(Message []map[string]any) Option {
+	return func(s *Slack) {
+		s.Message = Message
 	}
 }
 
@@ -106,7 +118,10 @@ func (s *Slack) send(ctx context.Context, body []byte) (*Response, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error sending message: %s", resp.Status)
+		return nil, fmt.Errorf(
+			"error sending message. Status Code: %d",
+			resp.StatusCode,
+		)
 	}
 
 	bodyResponse, err := io.ReadAll(resp.Body)

@@ -11,18 +11,19 @@ help:
 	@echo "Tasks:"
 	@egrep '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-40s %s\n", $$1, $$2}'
 
-.phony: pre-commit-install
+.PHONY: pre-commit-install
 pre-commit-install: ## Pre-commit install
 	@echo "Install pre-commit hooks..."
 	@pre-commit install --hook-type commit-msg
 	@pre-commit install
 
-.phony: pre-commit-run
+.PHONY: pre-commit-run
 pre-commit-run: format ## Pre-commit run
 	@echo "Run pre-commit hooks..."
 	@pre-commit run --all-files
 	@echo "Pre-commit hooks passed successfully"
 
+.PHONY: build
 build:
 	@echo "Building..."
 	@go build -o bin/ ./...
@@ -43,7 +44,6 @@ format:
 	@golines -m 80 -w .
 	@echo "Code formatted successfully"
 
-	
 .PHONY: test
 test: ## Run unit test
 	go test -v -coverprofile=rawcover.out -json $$(go list ./... | grep -v "github.com/lucasvillarinho/nofy/examples") 2>&1 | tee /tmp/gotest.log | gotestfmt -hide successful-tests,empty-packages
