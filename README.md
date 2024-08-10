@@ -1,11 +1,7 @@
-# 📬 nofy
-
-
 <p align="center"><img src="docs/images/logo.png" alt="nofylogo logo" width="400" ></p>
 
+📬 nofy is a versatile, zero-dependencies library for sending notifications to popular services such as Slack, Discord, Resend, and more.
 
-
-A versatile, zero-dependencies library for sending notifications to popular services such as Slack, Discord, Resend, and more
 
 ## Development
 
