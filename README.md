@@ -43,7 +43,7 @@ slackMensseger, _ := slack.NewSlackMensseger(
         // In this case, we are sending a single block with a text section
         slack.Message{
             Channel: "test-channel",
-            Content: []map[string]interface{}{
+            Content: []map[string]any{
                 {
                     "type": "section",
                     "text": map[string]string{
@@ -58,7 +58,7 @@ slackMensseger, _ := slack.NewSlackMensseger(
 nofy := nofy.NewWithMessengers(slackMensseger)
 
 // Send the message for all messengers
-_ := nofy.SendAll(context.Background())
+_ = nofy.SendAll(context.Background())
 ```
 
 #### More examples
