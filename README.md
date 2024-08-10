@@ -3,19 +3,19 @@
 📬 **NoFy** is a versatile, **zero-dependencies** library for sending notifications to popular services.
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/lucasvillarinho/nofy)](https://goreportcard.com/report/github.com/lucasvillarinho/nofy) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ec1e325348344d43906561ec19471598)](https://app.codacy.com/gh/lucasvillarinho/nofy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)<a href="https://codeclimate.com/github/lucasvillarinho/nofy/maintainability"><img src="https://api.codeclimate.com/v1/badges/957eaee7cf558abcf2d0/maintainability" /></a>
-### 🧙 Overview 
+
+### 🧙 Overview
 
 > [!WARNING]
 >
 > The API is currently **under development**. Expect potential changes and unstable behavior.
-
 
 - **Zero Dependencies**: Lightweight with no external dependencies.
 - **Multi-Service Support**: Send notifications to Slack, Discord, Resend, and more.
 - **Bulk Messaging**: Send notifications to multiple repositories simultaneously.
 - **Extensible**: Easily add more services or custom logic.
 
-### 📦 Installation 
+### 📦 Installation
 
 #### Install
 
@@ -24,7 +24,9 @@ go get -u github.com/lucasvillarinho/nofy
 ```
 
 #### Example
+
 ##### Slack
+
 ```go
 // Create a new Slack messenger
 slackMensseger, _ := slack.NewSlackMensseger(
@@ -56,7 +58,6 @@ _ := nofy.SendAll(context.Background())
 
 #### More examples
 
-
 ### 🤝 Alternatives
 
 For more example please check the specification file.
@@ -67,4 +68,4 @@ For more example please check the specification file.
 
 ### 📜 License
 
-This software is licensed under the MIT 
+This software is licensed under the MIT
