@@ -1,7 +1,7 @@
 # 📬 nofy
 
 
-<p align="center"><img src="docs/images/logo.png" alt="nofylogo logo" width="300" ></p>
+<p align="center"><img src="docs/images/logo.png" alt="nofylogo logo" width="400" ></p>
 
 
 
