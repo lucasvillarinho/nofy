@@ -156,7 +156,7 @@ func TestSlackOptions(t *testing.T) {
 	})
 }
 
-func TestSlackSend(t *testing.T) {
+func TestSlacksend(t *testing.T) {
 	t.Run("Successful message send", func(t *testing.T) {
 		mockClient := &MockHTTPClient{
 			DoFunc: func(req *http.Request) (*http.Response, error) {
@@ -227,7 +227,13 @@ func TestSlackSend(t *testing.T) {
 		resp, err := slack.send(context.Background(), body)
 
 		assert.IsNil(t, resp, "Expected nil response")
-		assert.AreEqualErrs(t, err, expectedErr, expectedErr)
+		assert.AreEqualErrs(
+			t,
+			err,
+			expectedErr,
+			expectedErr,
+			"Expected error sending message",
+		)
 	})
 
 	t.Run("Error due to non-OK status code", func(t *testing.T) {
@@ -254,7 +260,7 @@ func TestSlackSend(t *testing.T) {
 		resp, err := slack.send(context.Background(), body)
 
 		assert.IsNil(t, resp, "Expected nil response")
-		assert.AreEqualErrs(t, err, errExpected)
+		assert.AreEqualErrs(t, err, errExpected, "Expected non-OK status code")
 	})
 
 	t.Run("Error reading response", func(t *testing.T) {
@@ -323,6 +329,111 @@ func TestSlackSend(t *testing.T) {
 			err,
 			expectedErr,
 			"Expected error unmarshalling response",
+		)
+	})
+}
+
+func TestSlack_Send(t *testing.T) {
+	t.Run("Successful message send", func(t *testing.T) {
+		mockClient := &MockHTTPClient{
+			DoFunc: func(req *http.Request) (*http.Response, error) {
+				respBody := `{"ok": true}`
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(bytes.NewBufferString(respBody)),
+					Header:     make(http.Header),
+				}, nil
+			},
+		}
+
+		slack := &Slack{
+			Client: mockClient,
+			Message: []map[string]any{
+				{
+					"type": "section",
+					"text": "Hello, World!",
+				},
+			},
+		}
+
+		err := slack.Send(context.Background())
+
+		assert.IsNil(t, err, "Expected no error")
+	})
+
+	t.Run("Error marshalling message", func(t *testing.T) {
+		slack := &Slack{
+			Message: []map[string]any{
+				{
+					"type": func() {},
+				},
+			},
+		}
+		errExpected := errors.New(
+			"error marshalling message: json: unsupported type: func()",
+		)
+
+		err := slack.Send(context.Background())
+
+		assert.AreEqualErrs(t, err, errExpected, "Expected marshalling error")
+	})
+
+	t.Run("Error sending message", func(t *testing.T) {
+		mockClient := &MockHTTPClient{
+			DoFunc: func(req *http.Request) (*http.Response, error) {
+				return nil, errors.New("network error")
+			},
+		}
+		slack := &Slack{
+			Client: mockClient,
+			Message: []map[string]any{
+				{
+					"type": "section",
+					"text": "Hello, World!",
+				},
+			},
+		}
+		errExpected := errors.New("error sending message: network error")
+
+		err := slack.Send(context.Background())
+
+		assert.AreEqualErrs(
+			t,
+			err,
+			errExpected,
+			"Expected error sending message",
+		)
+	})
+
+	t.Run("Error from Slack API", func(t *testing.T) {
+		mockClient := &MockHTTPClient{
+			DoFunc: func(req *http.Request) (*http.Response, error) {
+				respBody := `{"ok": false, "error": "invalid_auth"}`
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(bytes.NewBufferString(respBody)),
+					Header:     make(http.Header),
+				}, nil
+			},
+		}
+		slack := &Slack{
+			Client: mockClient,
+			Message: []map[string]any{
+				{
+					"type": "section",
+					"text": "Hello, World!",
+				},
+			},
+		}
+		errExpected := errors.New("error sending message: invalid_auth")
+
+		err := slack.Send(context.Background())
+
+		assert.AreEqualErrs(
+			t,
+			err,
+			errExpected,
+			"Expected error from Slack API",
 		)
 	})
 }

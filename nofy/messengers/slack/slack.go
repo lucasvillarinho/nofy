@@ -150,7 +150,7 @@ func (s *Slack) Send(ctx context.Context) error {
 
 	slackResponse, err := s.send(ctx, jsonMessage)
 	if err != nil {
-		return fmt.Errorf("error sending message: %w", err)
+		return err
 	}
 
 	if !slackResponse.OK {
