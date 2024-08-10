@@ -9,10 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	pool "github.com/alitto/pond"
-
-	"github.com/lucasvillarinho/nofy"
-	"github.com/lucasvillarinho/nofy/helpers"
+	"github.com/lucasvillarinho/nofy/nofy"
 )
 
 const Timeout = 5000
@@ -23,13 +20,11 @@ type HTTPClient interface {
 
 // Slack is a client to send messages to Slack.
 type Slack struct {
-	ID         string
-	URL        string
-	Token      string
-	Timeout    time.Duration
-	Recipients []string
-	Client     HTTPClient
-	Message    []map[string]any
+	URL     string
+	Token   string
+	Timeout time.Duration
+	Client  HTTPClient
+	Message []map[string]any
 }
 
 // Response is the response from Slack.
@@ -48,12 +43,10 @@ type BlockMessage struct {
 type Option func(*Slack)
 
 // NewSlackClient creates a new Slack client.
-func NewSlackClient(options ...Option) (nofy.Sender, error) {
+func NewSlackClient(options ...Option) (nofy.Messenger, error) {
 	slack := &Slack{
-		ID:         "slack-sender-" + helpers.GenerateUUID(),
-		URL:        "https://slack.com/api/chat.postMessage",
-		Timeout:    Timeout * time.Millisecond,
-		Recipients: make([]string, 0),
+		URL:     "https://slack.com/api/chat.postMessage",
+		Timeout: Timeout * time.Millisecond,
 	}
 
 	for _, opt := range options {
@@ -82,36 +75,6 @@ func WithTimeout(Timeout time.Duration) Option {
 	return func(s *Slack) {
 		s.Timeout = Timeout
 	}
-}
-
-func (s *Slack) GetId() string {
-	return s.ID
-}
-
-// RemoveRecipient removes a recipient from the Slack client.
-func (s *Slack) RemoveRecipient(recipient any) error {
-	recipient, ok := recipient.(string)
-	if !ok {
-		return fmt.Errorf("invalid recipient")
-	}
-
-	for i, r := range s.Recipients {
-		if r == recipient {
-			s.Recipients = append(s.Recipients[:i], s.Recipients[i+1:]...)
-			return nil
-		}
-	}
-	return nil
-}
-
-// AddRecipient adds a recipient to the Slack client.
-func (s *Slack) AddRecipient(recipient any) error {
-	r, ok := recipient.(string)
-	if !ok {
-		return fmt.Errorf("invalid recipient")
-	}
-	s.Recipients = append(s.Recipients, r)
-	return nil
 }
 
 // Send sends a message to a Slack channel.
@@ -165,40 +128,21 @@ func (s *Slack) send(ctx context.Context, body []byte) (*Response, error) {
 // Doc https://api.slack.com/reference/messaging/blocks
 // Playground https://app.slack.com/block-kit-builder
 func (s *Slack) Send(ctx context.Context) error {
-	pool := pool.New(len(s.Recipients), len(s.Recipients))
-	group, ctx := pool.GroupContext(ctx)
-
-	for _, channel := range s.Recipients {
-		channel := channel
-		group.Submit(func() error {
-			message := BlockMessage{
-				Channel: channel,
-				Blocks:  s.Message,
-			}
-			jsonMessage, err := json.Marshal(message)
-			if err != nil {
-				return fmt.Errorf("error marshalling message: %w", err)
-			}
-
-			slackResponse, err := s.send(ctx, jsonMessage)
-			if err != nil {
-				return fmt.Errorf("error sending message: %w", err)
-			}
-
-			if !slackResponse.OK {
-				return fmt.Errorf(
-					"error sending message: %s",
-					slackResponse.Error,
-				)
-			}
-			return nil
-		})
-	}
-
-	err := group.Wait()
+	jsonMessage, err := json.Marshal(s.Message)
 	if err != nil {
-		return err
+		return fmt.Errorf("error marshalling message: %w", err)
 	}
 
+	slackResponse, err := s.send(ctx, jsonMessage)
+	if err != nil {
+		return fmt.Errorf("error sending message: %w", err)
+	}
+
+	if !slackResponse.OK {
+		return fmt.Errorf(
+			"error sending message: %s",
+			slackResponse.Error,
+		)
+	}
 	return nil
 }
