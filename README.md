@@ -27,7 +27,7 @@ go get -u github.com/lucasvillarinho/nofy
 
 #### Example
 
-**Slack**
+##### Slack
 ```go
 // Create a new Slack messenger
 slackMensseger, _ := slack.NewSlackMensseger(
@@ -60,7 +60,7 @@ _ := nofy.SendAll(context.Background())
 #### More examples
 
 
-#### 🤝 Alternatives
+### 🤝 Alternatives
 
 For more example please check the specification file.
 
