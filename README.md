@@ -2,7 +2,7 @@
 
 📬 **NoFy** is a versatile, **zero-dependencies** library for sending notifications to popular services.
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/lucasvillarinho/nofy)](https://goreportcard.com/report/github.com/lucasvillarinho/nofy) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ec1e325348344d43906561ec19471598)](https://app.codacy.com/gh/lucasvillarinho/nofy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) <a href="https://codeclimate.com/github/lucasvillarinho/nofy/maintainability"><img src="https://api.codeclimate.com/v1/badges/957eaee7cf558abcf2d0/maintainability" /></a>
+[![Go Report Card](https://goreportcard.com/badge/github.com/lucasvillarinho/nofy)](https://goreportcard.com/report/github.com/lucasvillarinho/nofy) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ec1e325348344d43906561ec19471598)](https://app.codacy.com/gh/lucasvillarinho/nofy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)<a href="https://codeclimate.com/github/lucasvillarinho/nofy/maintainability"><img src="https://api.codeclimate.com/v1/badges/957eaee7cf558abcf2d0/maintainability" /></a>
 ### 🧙 Overview 
 
 > [!WARNING]
@@ -24,7 +24,6 @@ go get -u github.com/lucasvillarinho/nofy
 ```
 
 #### Example
-
 ##### Slack
 ```go
 // Create a new Slack messenger

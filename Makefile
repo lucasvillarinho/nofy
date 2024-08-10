@@ -32,7 +32,7 @@ lint: build ## Run lint
 	@echo "Linter passed successfully"
 
 .PHONY: format
-format:
+format: ## Format code
 	@echo "Formatting code..."
 	@gofumpt -w .
 	@goimports -w .
