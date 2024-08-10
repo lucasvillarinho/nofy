@@ -2,9 +2,7 @@
 
 📬 **NoFy** is a versatile, **zero-dependencies** library for sending notifications to popular services.
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ec1e325348344d43906561ec19471598)](https://app.codacy.com/gh/lucasvillarinho/nofy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-
-
+[![Go Report Card](https://goreportcard.com/badge/github.com/lucasvillarinho/nofy)](https://goreportcard.com/report/github.com/lucasvillarinho/nofy) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ec1e325348344d43906561ec19471598)](https://app.codacy.com/gh/lucasvillarinho/nofy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 ### 🧙 Overview 
 
 > [!WARNING]
