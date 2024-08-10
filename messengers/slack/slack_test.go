@@ -124,7 +124,6 @@ func TestNewSlackClient(t *testing.T) {
 	})
 }
 
-// Testando as funções de opção
 func TestSlackOptions(t *testing.T) {
 	t.Run("WithToken option", func(t *testing.T) {
 		slack := &Slack{}
