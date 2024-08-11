@@ -150,7 +150,7 @@ func TestSlackOptions(t *testing.T) {
 	})
 }
 
-func TestSlacksend(t *testing.T) {
+func TestSlacksendRequest(t *testing.T) {
 	t.Run("Successful message send", func(t *testing.T) {
 		mockClient := &MockHTTPClient{
 			DoFunc: func(req *http.Request) (*http.Response, error) {
@@ -171,7 +171,7 @@ func TestSlacksend(t *testing.T) {
 		}
 		body := []byte(`{"text":"Hello, World!"}`)
 
-		resp, err := slack.send(context.Background(), body)
+		resp, err := slack.sendRequest(context.Background(), body)
 
 		assert.IsNil(t, err, "Expected no error")
 		assert.IsNotNil(t, resp, "Expected response to be not nil")
@@ -190,7 +190,7 @@ func TestSlacksend(t *testing.T) {
 			errors.New("parse \"://invalid-url\": missing protocol scheme"),
 		)
 
-		resp, err := slack.send(context.Background(), body)
+		resp, err := slack.sendRequest(context.Background(), body)
 
 		assert.IsNil(t, resp, "Expected nil response")
 		assert.AreEqualErrs(
@@ -218,7 +218,7 @@ func TestSlacksend(t *testing.T) {
 			errors.New("network error"),
 		)
 
-		resp, err := slack.send(context.Background(), body)
+		resp, err := slack.sendRequest(context.Background(), body)
 
 		assert.IsNil(t, resp, "Expected nil response")
 		assert.AreEqualErrs(
@@ -251,7 +251,7 @@ func TestSlacksend(t *testing.T) {
 			http.StatusUnauthorized,
 		)
 
-		resp, err := slack.send(context.Background(), body)
+		resp, err := slack.sendRequest(context.Background(), body)
 
 		assert.IsNil(t, resp, "Expected nil response")
 		assert.AreEqualErrs(t, err, errExpected, "Expected non-OK status code")
@@ -281,7 +281,7 @@ func TestSlacksend(t *testing.T) {
 			errors.New("error reading response"),
 		)
 
-		resp, err := slack.send(context.Background(), body)
+		resp, err := slack.sendRequest(context.Background(), body)
 
 		assert.IsNil(t, resp, "Expected nil response")
 		assert.AreEqualErrs(
@@ -315,7 +315,7 @@ func TestSlacksend(t *testing.T) {
 		)
 		body := []byte(`{"text":"Hello, World!"}`)
 
-		resp, err := slack.send(context.Background(), body)
+		resp, err := slack.sendRequest(context.Background(), body)
 
 		assert.IsNil(t, resp, "Expected nil response")
 		assert.AreEqualErrs(
@@ -360,7 +360,7 @@ func TestSlackSend(t *testing.T) {
 		assert.IsNil(t, err, "Expected no error")
 	})
 
-	t.Run("Error marshalling message", func(t *testing.T) {
+	t.Run("Error marshaling message", func(t *testing.T) {
 		slack := &Slack{
 			Message: Message{
 				Channel: "test-channel",
@@ -372,12 +372,12 @@ func TestSlackSend(t *testing.T) {
 			},
 		}
 		errExpected := errors.New(
-			"error marshalling message: json: unsupported type: func()",
+			"error marshaling message: json: unsupported type: func()",
 		)
 
 		err := slack.Send(context.Background())
 
-		assert.AreEqualErrs(t, err, errExpected, "Expected marshalling error")
+		assert.AreEqualErrs(t, err, errExpected, "Expected marshaling error")
 	})
 
 	t.Run("Error sending message", func(t *testing.T) {

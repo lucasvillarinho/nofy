@@ -6,10 +6,12 @@ import (
 	"testing"
 )
 
+const noArguments = 0
+
 func AreEqual(
 	t *testing.T,
-	got, expected interface{},
-	msgAndArgs ...interface{},
+	got, expected any,
+	msgAndArgs ...any,
 ) {
 	t.Helper()
 	if !reflect.DeepEqual(expected, got) {
@@ -21,8 +23,8 @@ func AreEqual(
 	}
 }
 
-func formatMessage(msgAndArgs ...interface{}) string {
-	if len(msgAndArgs) == 0 {
+func formatMessage(msgAndArgs ...any) string {
+	if len(msgAndArgs) == noArguments {
 		return ""
 	}
 	return fmt.Sprintf("\nMessage: %s", fmt.Sprint(msgAndArgs...))
@@ -51,9 +53,9 @@ func AreEqualErrs(t *testing.T, got, expected error, msgAndArgs ...any) {
 	}
 }
 
-func IsNotNil(t *testing.T, value any, msgAndArgs ...interface{}) {
+func IsNotNil(t *testing.T, value any, msgAndArgs ...any) {
 	t.Helper()
-	if isNil(value) {
+	if isNilObject(value) {
 		message := formatMessage(msgAndArgs...)
 		t.Errorf(`assert.NotNil failed:
 			Got:      %v (type %T)
@@ -61,9 +63,9 @@ func IsNotNil(t *testing.T, value any, msgAndArgs ...interface{}) {
 	}
 }
 
-func IsNil(t *testing.T, value any, msgAndArgs ...interface{}) {
+func IsNil(t *testing.T, value any, msgAndArgs ...any) {
 	t.Helper()
-	if !isNil(value) {
+	if !isNilObject(value) {
 		message := formatMessage(msgAndArgs...)
 		t.Errorf(`assert.IsNil failed:
 			Got:      %v (type %T)
@@ -71,7 +73,7 @@ func IsNil(t *testing.T, value any, msgAndArgs ...interface{}) {
 	}
 }
 
-func isNil(object any) bool {
+func isNilObject(object any) bool {
 	if object == nil {
 		return true
 	}

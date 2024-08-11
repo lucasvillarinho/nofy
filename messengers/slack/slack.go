@@ -95,7 +95,7 @@ func WithMessage(message Message) Option {
 // Send sends a message to a Slack channel.
 // It returns an error if the message could not be sent,
 // or if the response from Slack is not OK.
-func (s *Slack) send(ctx context.Context, body []byte) (*Response, error) {
+func (s *Slack) sendRequest(ctx context.Context, body []byte) (*Response, error) {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
@@ -142,16 +142,16 @@ func (s *Slack) send(ctx context.Context, body []byte) (*Response, error) {
 }
 
 // Send sends a message with blocks to a Slack channel.
-// Block messages are used to create rich messages with buttons, images, and other elements.
-// Doc https://api.slack.com/reference/messaging/blocks
-// Playground https://app.slack.com/block-kit-builder
+// Block messages are used to create rich messages with elements.
+// Doc: https://api.slack.com/reference/messaging/blocks
+// Playground: https://app.slack.com/block-kit-builder
 func (s *Slack) Send(ctx context.Context) error {
 	jsonMessage, err := json.Marshal(s.Message)
 	if err != nil {
-		return fmt.Errorf("error marshalling message: %w", err)
+		return fmt.Errorf("error marshaling message: %w", err)
 	}
 
-	slackResponse, err := s.send(ctx, jsonMessage)
+	slackResponse, err := s.sendRequest(ctx, jsonMessage)
 	if err != nil {
 		return err
 	}

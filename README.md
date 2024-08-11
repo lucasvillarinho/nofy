@@ -33,7 +33,7 @@ go get -u github.com/lucasvillarinho/nofy
 
 ```go
 // Create a new Slack messenger
-slackMensseger, _ := slack.NewSlackMensseger(
+slackMessenger, _ := slack.NewSlackMensseger(
     // Set the Slack token to be used to send (required)
     slack.WithToken("test-token"),
     slack.WithMessage(
@@ -54,7 +54,7 @@ slackMensseger, _ := slack.NewSlackMensseger(
         }))
 
 // Create a new Nofy with the Slack messenger
-nofy := nofy.NewWithMessengers(slackMensseger)
+nofy := nofy.NewWithMessengers(slackMessenger)
 
 // Send the message for all messengers
 _ = nofy.SendAll(context.Background())

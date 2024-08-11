@@ -242,12 +242,12 @@ func TestSendAll(t *testing.T) {
 		s := &Nofy{
 			messengers: []Messenger{
 				&MockMessenger{
-					sendFunc: func(ctx context.Context) error {
+					sendFunc: func(_ context.Context) error {
 						return errors.New("first message failed")
 					},
 				},
 				&MockMessenger{
-					sendFunc: func(ctx context.Context) error {
+					sendFunc: func(_ context.Context) error {
 						return errors.New("second message failed")
 					},
 				},
