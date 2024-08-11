@@ -2,8 +2,7 @@ name: Codecov
 
 on:
   push:
-    branches:
-      - main
+  pull_request:
 
 jobs:
   build:
@@ -19,9 +18,11 @@ jobs:
           go-version: ${{ matrix.go }}
 
       - name: Run Go test with coverage
-        run: go test -coverprofile=rawcover.out $(go list ./... | grep -v "github.com/lucasvillarinho/nofy/examples")
+        run: go test -coverprofile=coverage.out $(go list ./... | grep -v "github.com/lucasvillarinho/nofy/examples")
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
+        with:
+          files: coverage.out
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
