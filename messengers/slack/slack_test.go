@@ -27,9 +27,9 @@ func (r *FailingReader) Read(p []byte) (n int, err error) {
 	return 0, errors.New("error reading response")
 }
 
-func TestNewSlackClient(t *testing.T) {
+func TestNewSlackMessenger(t *testing.T) {
 	t.Run("Missing Token", func(t *testing.T) {
-		_, err := NewSlackMensseger(
+		_, err := NewSlackMessenger(
 			WithTimeout(5*time.Second),
 			WithMessage(
 				Message{
@@ -55,7 +55,7 @@ func TestNewSlackClient(t *testing.T) {
 	})
 
 	t.Run("Invalid Timeout", func(t *testing.T) {
-		_, err := NewSlackMensseger(
+		_, err := NewSlackMessenger(
 			WithToken("test-token"),
 			WithTimeout(0),
 			WithMessage(
@@ -82,7 +82,7 @@ func TestNewSlackClient(t *testing.T) {
 	})
 
 	t.Run("Missing channel", func(t *testing.T) {
-		_, err := NewSlackMensseger(
+		_, err := NewSlackMessenger(
 			WithToken("test-token"),
 			WithTimeout(5*time.Second),
 		)
@@ -96,7 +96,7 @@ func TestNewSlackClient(t *testing.T) {
 	})
 
 	t.Run("Successful client creation", func(t *testing.T) {
-		slackClient, err := NewSlackMensseger(
+		slackClient, err := NewSlackMessenger(
 			WithToken("test-token"),
 			WithTimeout(5*time.Second),
 			WithMessage(

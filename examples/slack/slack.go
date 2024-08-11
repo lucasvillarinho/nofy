@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// Create a new Slack messenger
-	slackMensseger, _ := slack.NewSlackMensseger(
+	slackMessenger, _ := slack.NewSlackMessenger(
 		// Set the Slack token to be used to send (required)
 		slack.WithToken("test-token"),
 		slack.WithMessage(
@@ -30,7 +30,7 @@ func main() {
 			}))
 
 	// Create a new Nofy with the Slack messenger
-	nofy := nofy.NewWithMessengers(slackMensseger)
+	nofy := nofy.NewWithMessengers(slackMessenger)
 
 	// Send the message for all messengers
 	err := nofy.SendAll(context.Background())

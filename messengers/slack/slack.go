@@ -44,8 +44,8 @@ type Response struct {
 
 type Option func(*Slack)
 
-// NewSlackClient creates a new Slack client.
-func NewSlackMensseger(options ...Option) (nofy.Messenger, error) {
+// NewSlackMessenger creates a new Slack client.
+func NewSlackMessenger(options ...Option) (nofy.Messenger, error) {
 	slack := &Slack{
 		URL:     "https://slack.com/api/chat.postMessage",
 		Timeout: Timeout * time.Millisecond,
