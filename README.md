@@ -75,4 +75,4 @@ For more example please check the specification file.
 
  ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
-This software is licensed under the [MIT]()
+This software is licensed under the [MIT](https://github.com/lucasvillarinho/nofy/blob/main/LICENSE)
