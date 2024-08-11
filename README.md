@@ -9,7 +9,7 @@
 
 </div>
 
-### ✨ Features
+### 💫 Features
 
 > [!WARNING]
 >
