@@ -5,8 +5,7 @@
 <br>
 <br>
 
-![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/lucasvillarinho/nofy)](https://goreportcard.com/report/github.com/lucasvillarinho/nofy) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ec1e325348344d43906561ec19471598)](https://app.codacy.com/gh/lucasvillarinho/nofy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)<a href="https://codeclimate.com/github/lucasvillarinho/nofy/maintainability"><img src="https://api.codeclimate.com/v1/badges/957eaee7cf558abcf2d0/maintainability" /></a> ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
-
+![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/lucasvillarinho/nofy)](https://goreportcard.com/report/github.com/lucasvillarinho/nofy) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ec1e325348344d43906561ec19471598)](https://app.codacy.com/gh/lucasvillarinho/nofy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)<a href="https://codeclimate.com/github/lucasvillarinho/nofy/maintainability"><img src="https://api.codeclimate.com/v1/badges/957eaee7cf558abcf2d0/maintainability" /></a> ![Sponsor](https://img.shields.io/badge/Sponsor-❤-ff69b4.svg)
 </div>
 
 ### 💫 Features
@@ -62,6 +61,13 @@ _ = nofy.SendAll(context.Background())
 ```
 
 #### More examples
+
+### 💛 Support the author
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-❤-ff69b4.svg)](https://github.com/sponsors/lucasvillarinho)
+Enjoying the project? Consider supporting it to help me keep improving and adding new features!
+
+[🙌 Support here](https://github.com/sponsors/lucasvillarinho)
 
 ### 🤝 Alternatives
 
