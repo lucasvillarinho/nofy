@@ -1,19 +1,18 @@
-<p align="center"><img src="docs/images/logo.png" alt="nofylogo logo" style="width:400px;" >
+<p align="center"><img src="docs/images/logo.png" alt="nofylogo logo">
 </h1>
 <div align="center">
 📬 NoFy is a versatile, zero-dependencies library for sending notifications to popular services.
 <br>
 <br>
 
-![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/lucasvillarinho/nofy)](https://goreportcard.com/report/github.com/lucasvillarinho/nofy) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ec1e325348344d43906561ec19471598)](https://app.codacy.com/gh/lucasvillarinho/nofy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)<a href="https://codeclimate.com/github/lucasvillarinho/nofy/maintainability"><img src="https://api.codeclimate.com/v1/badges/957eaee7cf558abcf2d0/maintainability" /></a> ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
-
+![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/lucasvillarinho/nofy)](https://goreportcard.com/report/github.com/lucasvillarinho/nofy) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ec1e325348344d43906561ec19471598)](https://app.codacy.com/gh/lucasvillarinho/nofy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)<a href="https://codeclimate.com/github/lucasvillarinho/nofy/maintainability"><img src="https://api.codeclimate.com/v1/badges/957eaee7cf558abcf2d0/maintainability" /></a> ![Sponsor](https://img.shields.io/badge/Sponsor-❤-ff69b4.svg)
 </div>
 
-### 🧙 Overview
+### 💫 Features
 
 > [!WARNING]
 >
-> The API is currently **under development**. Expect potential changes and unstable behavior.
+>API is currently under development. Expect potential changes and unstable behavior, but it is fully functional and ready for use.
 
 - **Zero Dependencies**: Lightweight with no external dependencies.
 - **Multi-Service Support**: Send notifications to Slack, Discord, Resend, and more.
@@ -61,7 +60,12 @@ nofy := nofy.NewWithMessengers(slackMensseger)
 _ = nofy.SendAll(context.Background())
 ```
 
-#### More examples
+### 💛 Support the author
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-❤-ff69b4.svg)](https://github.com/sponsors/lucasvillarinho)
+Enjoying the project? Consider supporting it to help me keep improving and adding new features!
+
+[🙌 Support here](https://github.com/sponsors/lucasvillarinho)
 
 ### 🤝 Alternatives
 
@@ -73,4 +77,6 @@ For more example please check the specification file.
 
 ### 📜 License
 
-This software is licensed under the MIT
+ ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+
+This software is licensed under the [MIT](https://github.com/lucasvillarinho/nofy/blob/main/LICENSE)
