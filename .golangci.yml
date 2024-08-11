@@ -1,7 +1,7 @@
 run:
   timeout: 5m
   tests: true
-  
+
 linters:
   enable:
     - errcheck
@@ -11,13 +11,60 @@ linters:
     - staticcheck
     - typecheck
     - unused
+    - misspell
+    - revive
+    - dupl
+    - gocritic
+    - stylecheck
+    - tagalign
+
+linters-settings:
+  misspell:
+    locale: US
+  staticcheck:
+    checks: ["all"]
+  revive:
+    severity: warning             
+    confidence: 0.8               
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unused-parameter
+      - name: unreachable-code
+      - name: redefines-builtin-id
+  gocritic:
+    enable-all: true
+  govet:
+    enable-all: true
+
 
 issues:
+  exclude-files:
+    - '.*_test\.go'
   exclude-rules:
-    - path: _test\.go
+    - text: "avoid magic numbers like '0'"
       linters:
-        - errcheck
-    - path: vendor/.*
+        - revive
+    - text: "avoid magic numbers like '1'"
       linters:
-        - govet
-        
+        - revive
+
+

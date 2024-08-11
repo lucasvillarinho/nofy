@@ -9,15 +9,15 @@ import (
 
 func main() {
 	// Create a new Slack messenger
-	slackMensseger, _ := slack.NewSlackMensseger(
+	slackMessenger, _ := slack.NewSlackMessenger(
 		// Set the Slack token to be used to send (required)
-		slack.WithToken("test-token"),
+		slack.WithToken("token"),
 		slack.WithMessage(
 			// Message to be sent to the slack channel (required)
 			// The message is a slice of maps, each map represents a block of the message
 			// In this case, we are sending a single block with a text section
 			slack.Message{
-				Channel: "test-channel",
+				Channel: "channelID",
 				Content: []map[string]interface{}{
 					{
 						"type": "section",
@@ -30,7 +30,7 @@ func main() {
 			}))
 
 	// Create a new Nofy with the Slack messenger
-	nofy := nofy.NewWithMessengers(slackMensseger)
+	nofy := nofy.NewWithMessengers(slackMessenger)
 
 	// Send the message for all messengers
 	err := nofy.SendAll(context.Background())
