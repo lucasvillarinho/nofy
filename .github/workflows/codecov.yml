@@ -2,9 +2,7 @@ name: Codecov
 
 on:
   push:
-    paths: [ '**.go' ]
   pull_request:
-    paths: [ '**.go' ]
 
 jobs:
   build:
