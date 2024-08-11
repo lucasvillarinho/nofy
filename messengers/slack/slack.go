@@ -23,9 +23,9 @@ type HTTPClient interface {
 type Slack struct {
 	URL     string
 	Token   string
-	Timeout time.Duration
 	Client  HTTPClient
 	Message Message
+	Timeout time.Duration
 }
 
 // Message is the message to send to Slack.
@@ -38,8 +38,8 @@ type Message struct {
 // OK is true if the message was sent successfully.
 // Error contains the error message if the message could not be sent.
 type Response struct {
-	OK    bool   `json:"ok"`
 	Error string `json:"error,omitempty"`
+	OK    bool   `json:"ok"`
 }
 
 type Option func(*Slack)
@@ -55,13 +55,13 @@ func NewSlackMensseger(options ...Option) (nofy.Messenger, error) {
 		opt(slack)
 	}
 
-	if len(strings.TrimSpace(slack.Token)) == 0 {
+	if strings.TrimSpace(slack.Token) == "" {
 		return nil, fmt.Errorf("missing token")
 	}
 	if slack.Timeout == 0 {
 		return nil, fmt.Errorf("missing timeout")
 	}
-	if len(strings.TrimSpace(slack.Message.Channel)) == 0 {
+	if strings.TrimSpace(slack.Message.Channel) == "" {
 		return nil, fmt.Errorf("missing channel")
 	}
 	if slack.Message.Content == nil {
@@ -95,7 +95,10 @@ func WithMessage(message Message) Option {
 // Send sends a message to a Slack channel.
 // It returns an error if the message could not be sent,
 // or if the response from Slack is not OK.
-func (s *Slack) sendRequest(ctx context.Context, body []byte) (*Response, error) {
+func (s *Slack) sendRequest(
+	ctx context.Context,
+	body []byte,
+) (*Response, error) {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
