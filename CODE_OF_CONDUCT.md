@@ -9,4 +9,4 @@ Be kind. Be courteous. Be welcoming.
 Listen. Consider and acknowledge people's points before responding.
 Should you experience anything that makes you feel unwelcome in NoFy community, please contact [Villa](https://github.com/lucasvillarinho/nofy)
 
-**We will not tolerate harassment from anyone in our community**
+We will not tolerate harassment from anyone in our community
