@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/images/logo.png" alt="nofylogo logo" style="width:400px;" >
+<p align="center"><img src="docs/images/logo.png" alt="nofylogo logo">
 </h1>
 <div align="center">
 📬 NoFy is a versatile, zero-dependencies library for sending notifications to popular services.
