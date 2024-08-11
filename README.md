@@ -12,7 +12,7 @@
 
 > [!WARNING]
 >
-> The API is currently **under development**. Expect potential changes and unstable behavior.
+>API is currently under development. Expect potential changes and unstable behavior, but it is fully functional and ready for use.
 
 - **Zero Dependencies**: Lightweight with no external dependencies.
 - **Multi-Service Support**: Send notifications to Slack, Discord, Resend, and more.
@@ -59,8 +59,6 @@ nofy := nofy.NewWithMessengers(slackMensseger)
 // Send the message for all messengers
 _ = nofy.SendAll(context.Background())
 ```
-
-#### More examples
 
 ### 💛 Support the author
 
