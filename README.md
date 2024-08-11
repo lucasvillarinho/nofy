@@ -12,7 +12,7 @@
 
 > [!WARNING]
 >
->API is currently under development. Expect potential changes and unstable behavior, but it is fully functional and ready for use.
+>API is currently under development. Expect potential changes and unstable behavior.
 
 - **Zero Dependencies**: Lightweight with no external dependencies.
 - **Multi-Service Support**: Send notifications to Slack, Discord, Resend, and more.
