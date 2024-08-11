@@ -9,7 +9,7 @@
 
 </div>
 
-### 🧙 Overview
+### ✨ Features
 
 > [!WARNING]
 >
@@ -73,4 +73,6 @@ For more example please check the specification file.
 
 ### 📜 License
 
-This software is licensed under the MIT
+ ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+
+This software is licensed under the [MIT]()
