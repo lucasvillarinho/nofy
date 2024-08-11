@@ -66,12 +66,12 @@ _ = nofy.SendAll(context.Background())
 
 Enjoying the project? Consider [supporting](https://github.com/sponsors/lucasvillarinho) it to help me keep improving and adding new features!
 
-### 🫂 Especial Thanks
-
-- Logo - Incredible logo was made by [Sergio Neves](https://github.com/SergioLNeves)
-
 ### 📜 License
 
  [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](<https://github.com/lucasvillarinho/nofy/blob/main/LICENSE>)
 
 This software is licensed under the [MIT](https://github.com/lucasvillarinho/nofy/blob/main/LICENSE)
+
+### 🫂 Special Thanks
+
+- Logo - Incredible logo was made by [Sergio Neves](https://github.com/SergioLNeves)
