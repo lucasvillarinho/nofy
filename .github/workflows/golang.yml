@@ -2,9 +2,9 @@ name: Golang workflow
 
 on:
   push:
-    # paths: ["**.go"]
+    paths: ["**.go"]
   pull_request:
-    # paths: ["**.go"]
+    paths: ["**.go"]
 
 jobs:
   build:
@@ -18,8 +18,15 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go }}
-      - name: Golangci-lint
+
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest -test ./...
+      
+      - name: securego/gosec
+        run: go run github.com/securego/gosec/v2/cmd/gosec@latest -quiet ./...
+        
+      - name: golangci-lint
         uses: golangci/golangci-lint-action@v6.1.0
       
-      - name: Unit Test
+      - name: unit test
         run: go test -race ./...
