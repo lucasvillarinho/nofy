@@ -19,14 +19,14 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
-      - name: govulncheck
+      - name: Run govulncheck
         run: go run golang.org/x/vuln/cmd/govulncheck@latest -test ./...
       
-      - name: securego/gosec
+      - name: Run securego/gosec
         run: go run github.com/securego/gosec/v2/cmd/gosec@latest -quiet ./...
         
-      - name: golangci-lint
+      - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6.1.0
       
-      - name: unit test
+      - name: Run unit test
         run: go test -race ./...
