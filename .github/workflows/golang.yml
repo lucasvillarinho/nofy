@@ -2,9 +2,9 @@ name: Golang workflow
 
 on:
   push:
-    paths: ["**.go"]
+    # paths: ["**.go"]
   pull_request:
-    paths: ["**.go"]
+    # paths: ["**.go"]
 
 jobs:
   build:
@@ -18,6 +18,8 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go }}
-          
-      - name: Run Go test
+      - name: Golangci-lint
+        uses: golangci/golangci-lint-action@v6.1.0
+      
+      - name: Unit Test
         run: go test -race ./...
