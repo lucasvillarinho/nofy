@@ -12,7 +12,7 @@ type Request struct {
 	Headers map[string]string
 	Payload map[string]any
 	Client  *http.Client
-	Timeout *time.Duration
+	Timeout time.Duration
 	Method  string
 	URL     string
 }
@@ -46,7 +46,7 @@ func WithHeader(key, value string) Option {
 // WithTimeout sets the timeout for the request.
 func WithTimeout(timeout time.Duration) Option {
 	return func(r *Request) {
-		r.Timeout = &timeout
+		r.Timeout = timeout
 	}
 }
 
@@ -104,20 +104,20 @@ func Do(options ...Option) (*http.Response, error) {
 // any is a type that can hold any value.
 func validate(r *Request) error {
 	if r.Method == "" {
-		return fmt.Errorf("missing method")
+		return fmt.Errorf("method is required")
 	}
 
 	if r.URL == "" {
-		return fmt.Errorf("missing URL")
+		return fmt.Errorf("url is required")
 	}
 
-	if r.Timeout == nil {
-		return fmt.Errorf("missing timeout")
+	if r.Timeout == 0 {
+		return fmt.Errorf("timeout is required")
 	}
 
 	if r.Client == nil {
 		r.Client = &http.Client{
-			Timeout: *r.Timeout,
+			Timeout: r.Timeout,
 		}
 	}
 
