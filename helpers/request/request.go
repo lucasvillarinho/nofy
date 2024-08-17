@@ -4,8 +4,16 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 )
+
+type Requester interface {
+	DoWithCtx(
+		ctx context.Context,
+		options ...Option,
+	) (*http.Response, []byte, error)
+}
 
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
@@ -62,7 +70,10 @@ func WithPayload(payload []byte) Option {
 // Do sends a request to the given URL with the given method, headers, and payload.
 // It returns the response from the server.
 // If the request fails, it returns an error.
-func DoWithCtx(ctx context.Context, options ...Option) (*http.Response, error) {
+func DoWithCtx(
+	ctx context.Context,
+	options ...Option,
+) (*http.Response, []byte, error) {
 	r := &Request{}
 
 	for _, opt := range options {
@@ -70,16 +81,21 @@ func DoWithCtx(ctx context.Context, options ...Option) (*http.Response, error) {
 	}
 
 	if err := validate(r); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if r.Client == nil {
 		r.Client = http.DefaultClient
 	}
 
-	req, err := http.NewRequestWithContext(ctx, r.Method, r.URL, bytes.NewBuffer(r.Payload))
+	req, err := http.NewRequestWithContext(
+		ctx,
+		r.Method,
+		r.URL,
+		bytes.NewBuffer(r.Payload),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
+		return nil, nil, fmt.Errorf("error creating request: %w", err)
 	}
 
 	for header, headerValue := range r.Headers {
@@ -88,11 +104,15 @@ func DoWithCtx(ctx context.Context, options ...Option) (*http.Response, error) {
 
 	resp, err := r.Client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("error sending request: %w", err)
+		return nil, nil, fmt.Errorf("error sending request: %w", err)
+	}
+
+	bodyResponse, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error reading response: %w", err)
 	}
 	defer resp.Body.Close()
-
-	return resp, nil
+	return resp, bodyResponse, nil
 }
 
 // any is a type that can hold any value.

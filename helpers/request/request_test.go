@@ -42,7 +42,8 @@ func TestValidate(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		r := &Request{
 			Method: "GET",
-			URL:    "https://example.com"}
+			URL:    "https://example.com",
+		}
 
 		err := validate(r)
 		assert.IsNil(t, err)
@@ -72,7 +73,12 @@ func TestWith(t *testing.T) {
 
 		WithURL("https://example.com")(r)
 
-		assert.AreEqual(t, r.URL, "https://example.com", "Expected URL to be set")
+		assert.AreEqual(
+			t,
+			r.URL,
+			"https://example.com",
+			"Expected URL to be set",
+		)
 	})
 
 	t.Run("with header", func(t *testing.T) {
@@ -80,7 +86,12 @@ func TestWith(t *testing.T) {
 
 		WithHeader("key", "value")(r)
 
-		assert.AreEqual(t, r.Headers["key"], "value", "Expected header to be set")
+		assert.AreEqual(
+			t,
+			r.Headers["key"],
+			"value",
+			"Expected header to be set",
+		)
 	})
 
 	t.Run("with payload", func(t *testing.T) {
@@ -96,23 +107,37 @@ func TestWith(t *testing.T) {
 
 func TestDo(t *testing.T) {
 	t.Run("invalid request", func(t *testing.T) {
-		resp, err := DoWithCtx(context.Background())
+		resp, body, err := DoWithCtx(context.Background())
 
 		assert.IsNil(t, resp)
-		assert.AreEqualErrs(t, err, errors.New("method is required"), "Expected error")
+		assert.IsNil(t, body)
+		assert.AreEqualErrs(
+			t,
+			err,
+			errors.New("method is required"),
+			"Expected error",
+		)
 	})
 
 	t.Run("error creating request", func(t *testing.T) {
-		resp, err := DoWithCtx(
+		resp, body, err := DoWithCtx(
 			context.TODO(),
 			WithMethod(http.MethodGet),
 			WithURL("://invalid-url"),
 			WithClient(http.DefaultClient),
 		)
-		expectedErr := errors.New("error creating request: parse \"://invalid-url\": missing protocol scheme")
+		expectedErr := errors.New(
+			"error creating request: parse \"://invalid-url\": missing protocol scheme",
+		)
 
 		assert.IsNil(t, resp)
-		assert.AreEqualErrs(t, err, expectedErr, "Expected error creating request")
+		assert.IsNil(t, body)
+		assert.AreEqualErrs(
+			t,
+			err,
+			expectedErr,
+			"Expected error creating request",
+		)
 	})
 
 	t.Run("error sending request", func(t *testing.T) {
@@ -121,7 +146,7 @@ func TestDo(t *testing.T) {
 				return nil, errors.New("network error")
 			},
 		}
-		resp, err := DoWithCtx(
+		resp, body, err := DoWithCtx(
 			context.TODO(),
 			WithMethod(http.MethodGet),
 			WithURL("https://example.com"),
@@ -130,7 +155,13 @@ func TestDo(t *testing.T) {
 		expectedErr := errors.New("error sending request: network error")
 
 		assert.IsNil(t, resp)
-		assert.AreEqualErrs(t, err, expectedErr, "Expected error sending request")
+		assert.IsNil(t, body)
+		assert.AreEqualErrs(
+			t,
+			err,
+			expectedErr,
+			"Expected error sending request",
+		)
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -138,24 +169,35 @@ func TestDo(t *testing.T) {
 			DoFunc: func(req *http.Request) (*http.Response, error) {
 				return &http.Response{
 					StatusCode: http.StatusOK,
-					Body:       io.NopCloser(strings.NewReader(`{"message": "success"}`)),
+					Body: io.NopCloser(
+						strings.NewReader(`{"message": "success"}`),
+					),
 					Header: map[string][]string{
 						"Content-Type": {"application/json"},
 					},
 				}, nil
 			},
 		}
-		resp, err := DoWithCtx(
+		resp, body, err := DoWithCtx(
 			context.Background(),
 			WithMethod(http.MethodGet),
 			WithURL("https://example.com"),
 			WithClient(mockClient),
 		)
 
-		assert.AreEqual(t, resp.StatusCode, http.StatusOK, "Expected status code")
-		body, _ := io.ReadAll(resp.Body)
+		assert.AreEqual(
+			t,
+			resp.StatusCode,
+			http.StatusOK,
+			"Expected status code",
+		)
 		assert.AreEqual(t, `{"message": "success"}`, string(body))
-		assert.AreEqual(t, resp.Header.Get("Content-Type"), "application/json", "Expected content type")
+		assert.AreEqual(
+			t,
+			resp.Header.Get("Content-Type"),
+			"application/json",
+			"Expected content type",
+		)
 		assert.IsNil(t, err)
 	})
 }

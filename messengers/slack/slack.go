@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -21,10 +20,11 @@ type HTTPClient interface {
 
 // Slack is a client to send messages to Slack.
 type Slack struct {
-	URL     string
-	Token   string
-	Message Message
-	Timeout time.Duration
+	URL       string
+	Token     string
+	Message   Message
+	Timeout   time.Duration
+	requester request.Requester
 }
 
 // Message is the message to send to Slack.
@@ -105,23 +105,24 @@ func (s *Slack) Send(ctx context.Context) error {
 		Timeout: s.Timeout,
 	}
 
-	resp, err := request.DoWithCtx(ctx,
+	resp, body, err := s.requester.DoWithCtx(ctx,
 		request.WithMethod(http.MethodPost),
 		request.WithURL(s.URL),
 		request.WithPayload(msg),
 		request.WithClient(httpClient))
-
 	if err != nil {
 		return fmt.Errorf("error sending request: %w", err)
 	}
 
-	bodyResponse, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("error reading response: %w", err)
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf(
+			"error sending message status-code: %d",
+			resp.StatusCode,
+		)
 	}
 
 	var slackResponse Response
-	err = json.Unmarshal(bodyResponse, &slackResponse)
+	err = json.Unmarshal(body, &slackResponse)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling response: %w", err)
 	}

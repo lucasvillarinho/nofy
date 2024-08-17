@@ -1,26 +1,33 @@
 package slack
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/lucasvillarinho/nofy/helpers/assert"
+	"github.com/lucasvillarinho/nofy/helpers/request"
 )
 
-type MockHTTPClient struct {
-	DoFunc func(req *http.Request) (*http.Response, error)
+// errorReader é uma estrutura que implementa io.Reader, mas sempre retorna um erro
+type errorReader struct{}
+
+func (e *errorReader) Read(p []byte) (n int, err error) {
+	return 0, errors.New("forced read error")
 }
 
-func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	return m.DoFunc(req)
+// MockRequest é uma estrutura que você pode usar para mockar as requisições HTTP
+type MockRequest struct {
+	DoFunc func(ctx context.Context, options ...request.Option) (*http.Response, error)
 }
 
-type FailingReader struct{}
-
-func (r *FailingReader) Read(p []byte) (n int, err error) {
-	return 0, errors.New("error reading response")
+func (m *MockRequest) DoWithCtx(
+	ctx context.Context,
+	options ...request.Option,
+) (*http.Response, error) {
+	return m.DoFunc(ctx, options...)
 }
 
 func TestNewSlackMessenger(t *testing.T) {
@@ -114,6 +121,79 @@ func TestSlackOptions(t *testing.T) {
 			slack.Timeout,
 			10*time.Second,
 			"Expected timeout to be 10s",
+		)
+	})
+}
+
+func TestSlackSend(t *testing.T) {
+	t.Run("successful", func(t *testing.T) {
+		mockRequester := &request.MockRequester{
+			DoWithCtxFunc: func(ctx context.Context, options ...request.Option) (*http.Response, []byte, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+				}, []byte(`{"ok": true}`), nil
+			},
+		}
+
+		msg := Message{
+			Channel: "test-channel",
+			Content: []map[string]any{
+				{
+					"type": "section",
+					"text": map[string]string{
+						"type": "mrkdwn",
+						"text": "Hello, World!",
+					},
+				},
+			},
+		}
+		messenger := &Slack{
+			Message:   msg,
+			URL:       "https://slack.com/api/chat.postMessage",
+			Timeout:   5 * time.Second,
+			requester: mockRequester,
+		}
+
+		err := messenger.Send(context.TODO())
+
+		assert.IsNil(t, err)
+	})
+
+	t.Run("status nok", func(t *testing.T) {
+		mockRequester := &request.MockRequester{
+			DoWithCtxFunc: func(ctx context.Context, options ...request.Option) (*http.Response, []byte, error) {
+				return &http.Response{
+					StatusCode: http.StatusBadRequest,
+				}, []byte(`{"ok": false}`), nil
+			},
+		}
+
+		msg := Message{
+			Channel: "test-channel",
+			Content: []map[string]any{
+				{
+					"type": "section",
+					"text": map[string]string{
+						"type": "mrkdwn",
+						"text": "Hello, World!",
+					},
+				},
+			},
+		}
+		messenger := &Slack{
+			Message:   msg,
+			URL:       "",
+			Timeout:   5 * time.Second,
+			requester: mockRequester,
+		}
+
+		err := messenger.Send(context.TODO())
+
+		assert.AreEqualErrs(
+			t,
+			err,
+			errors.New("error sending message status-code: 400"),
+			"Expected error sending message",
 		)
 	})
 }
