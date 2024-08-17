@@ -2,17 +2,19 @@ package request
 
 import (
 	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
 	"net/http"
-	"time"
 )
+
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
 
 type Request struct {
 	Headers map[string]string
-	Payload map[string]any
-	Client  *http.Client
-	Timeout time.Duration
+	Payload []byte
+	Client  HTTPClient
 	Method  string
 	URL     string
 }
@@ -43,22 +45,15 @@ func WithHeader(key, value string) Option {
 	}
 }
 
-// WithTimeout sets the timeout for the request.
-func WithTimeout(timeout time.Duration) Option {
-	return func(r *Request) {
-		r.Timeout = timeout
-	}
-}
-
 // WithClient sets the client to use for the request.
-func WithClient(client *http.Client) Option {
+func WithClient(client HTTPClient) Option {
 	return func(r *Request) {
 		r.Client = client
 	}
 }
 
 // WithPayload sets the payload of the request.
-func WithPayload(payload map[string]any) Option {
+func WithPayload(payload []byte) Option {
 	return func(r *Request) {
 		r.Payload = payload
 	}
@@ -67,7 +62,7 @@ func WithPayload(payload map[string]any) Option {
 // Do sends a request to the given URL with the given method, headers, and payload.
 // It returns the response from the server.
 // If the request fails, it returns an error.
-func Do(options ...Option) (*http.Response, error) {
+func DoWithContext(ctx context.Context, options ...Option) (*http.Response, error) {
 	r := &Request{}
 
 	for _, opt := range options {
@@ -78,12 +73,11 @@ func Do(options ...Option) (*http.Response, error) {
 		return nil, err
 	}
 
-	body, err := json.Marshal(r.Payload)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling payload: %w", err)
+	if r.Client == nil {
+		r.Client = http.DefaultClient
 	}
 
-	req, err := http.NewRequest(r.Method, r.URL, bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, r.Method, r.URL, bytes.NewBuffer(r.Payload))
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
@@ -109,16 +103,6 @@ func validate(r *Request) error {
 
 	if r.URL == "" {
 		return fmt.Errorf("url is required")
-	}
-
-	if r.Timeout == 0 {
-		return fmt.Errorf("timeout is required")
-	}
-
-	if r.Client == nil {
-		r.Client = &http.Client{
-			Timeout: r.Timeout,
-		}
 	}
 
 	return nil

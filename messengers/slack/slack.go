@@ -1,7 +1,6 @@
 package slack
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/lucasvillarinho/nofy"
+	"github.com/lucasvillarinho/nofy/helpers/request"
 )
 
 const Timeout = 5000
@@ -23,7 +23,6 @@ type HTTPClient interface {
 type Slack struct {
 	URL     string
 	Token   string
-	Client  HTTPClient
 	Message Message
 	Timeout time.Duration
 }
@@ -92,71 +91,39 @@ func WithMessage(message Message) Option {
 	}
 }
 
-// Send sends a message to a Slack channel.
-// It returns an error if the message could not be sent,
-// or if the response from Slack is not OK.
-func (s *Slack) sendRequest(
-	ctx context.Context,
-	body []byte,
-) (*Response, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		s.URL,
-		bytes.NewBuffer(body),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+s.Token)
-
-	client := s.Client
-	if client == nil {
-		client = &http.Client{}
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("error sending message: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf(
-			"error sending message. Status Code: %d",
-			resp.StatusCode,
-		)
-	}
-
-	bodyResponse, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading response: %w", err)
-	}
-
-	var slackResponse Response
-	err = json.Unmarshal(bodyResponse, &slackResponse)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling response: %w", err)
-	}
-
-	return &slackResponse, nil
-}
-
 // Send sends a message with blocks to a Slack channel.
 // Block messages are used to create rich messages with elements.
 // Doc: https://api.slack.com/reference/messaging/blocks
 // Playground: https://app.slack.com/block-kit-builder
 func (s *Slack) Send(ctx context.Context) error {
-	jsonMessage, err := json.Marshal(s.Message)
+	msg, err := json.Marshal(s.Message)
 	if err != nil {
 		return fmt.Errorf("error marshaling message: %w", err)
 	}
 
-	slackResponse, err := s.sendRequest(ctx, jsonMessage)
+	httpClient := &http.Client{
+		Timeout: s.Timeout,
+	}
+
+	resp, err := request.DoWithContext(ctx,
+		request.WithMethod(http.MethodPost),
+		request.WithURL(s.URL),
+		request.WithPayload(msg),
+		request.WithClient(httpClient))
+
 	if err != nil {
-		return err
+		return fmt.Errorf("error sending request: %w", err)
+	}
+
+	bodyResponse, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response: %w", err)
+	}
+
+	var slackResponse Response
+	err = json.Unmarshal(bodyResponse, &slackResponse)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling response: %w", err)
 	}
 
 	if !slackResponse.OK {
