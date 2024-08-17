@@ -105,7 +105,7 @@ func (s *Slack) Send(ctx context.Context) error {
 		Timeout: s.Timeout,
 	}
 
-	resp, err := request.DoWithContext(ctx,
+	resp, err := request.DoWithCtx(ctx,
 		request.WithMethod(http.MethodPost),
 		request.WithURL(s.URL),
 		request.WithPayload(msg),

@@ -62,7 +62,7 @@ func WithPayload(payload []byte) Option {
 // Do sends a request to the given URL with the given method, headers, and payload.
 // It returns the response from the server.
 // If the request fails, it returns an error.
-func DoWithContext(ctx context.Context, options ...Option) (*http.Response, error) {
+func DoWithCtx(ctx context.Context, options ...Option) (*http.Response, error) {
 	r := &Request{}
 
 	for _, opt := range options {

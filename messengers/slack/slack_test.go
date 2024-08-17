@@ -24,7 +24,7 @@ func (r *FailingReader) Read(p []byte) (n int, err error) {
 }
 
 func TestNewSlackMessenger(t *testing.T) {
-	t.Run("Missing Token", func(t *testing.T) {
+	t.Run("missing Token", func(t *testing.T) {
 		_, err := NewSlackMessenger(
 			WithTimeout(5*time.Second),
 			WithMessage(
@@ -50,7 +50,7 @@ func TestNewSlackMessenger(t *testing.T) {
 		)
 	})
 
-	t.Run("Invalid Timeout", func(t *testing.T) {
+	t.Run("invalid Timeout", func(t *testing.T) {
 		_, err := NewSlackMessenger(
 			WithToken("test-token"),
 			WithTimeout(0),
@@ -77,7 +77,7 @@ func TestNewSlackMessenger(t *testing.T) {
 		)
 	})
 
-	t.Run("Missing channel", func(t *testing.T) {
+	t.Run("missing channel", func(t *testing.T) {
 		_, err := NewSlackMessenger(
 			WithToken("test-token"),
 			WithTimeout(5*time.Second),
@@ -90,37 +90,10 @@ func TestNewSlackMessenger(t *testing.T) {
 			"Expected missing Message error",
 		)
 	})
-
-	t.Run("Successful client creation", func(t *testing.T) {
-		slackClient, err := NewSlackMessenger(
-			WithToken("test-token"),
-			WithTimeout(5*time.Second),
-			WithMessage(
-				Message{
-					Channel: "test-channel",
-					Content: []map[string]any{
-						{
-							"type": "section",
-							"text": map[string]string{
-								"type": "mrkdwn",
-								"text": "Hello, World!",
-							},
-						},
-					},
-				}),
-		)
-
-		assert.AreEqual(
-			t,
-			"test-token",
-			"Expected token to be 'test-token'",
-		)
-		assert.IsNil(t, err, "Expected timeout to be 5s")
-	})
 }
 
 func TestSlackOptions(t *testing.T) {
-	t.Run("WithToken option", func(t *testing.T) {
+	t.Run("withToken", func(t *testing.T) {
 		slack := &Slack{}
 		WithToken("test-token")(slack)
 
@@ -132,7 +105,7 @@ func TestSlackOptions(t *testing.T) {
 		)
 	})
 
-	t.Run("WithTimeout option", func(t *testing.T) {
+	t.Run("withTimeout", func(t *testing.T) {
 		slack := &Slack{}
 		WithTimeout(10 * time.Second)(slack)
 

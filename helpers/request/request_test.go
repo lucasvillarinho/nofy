@@ -39,7 +39,7 @@ func TestValidate(t *testing.T) {
 		assert.IsNotNil(t, err)
 		assert.AreEqual(t, err.Error(), "url is required")
 	})
-	t.Run("Valid", func(t *testing.T) {
+	t.Run("valid", func(t *testing.T) {
 		r := &Request{
 			Method: "GET",
 			URL:    "https://example.com"}
@@ -96,14 +96,14 @@ func TestWith(t *testing.T) {
 
 func TestDo(t *testing.T) {
 	t.Run("invalid request", func(t *testing.T) {
-		resp, err := DoWithContext(context.Background())
+		resp, err := DoWithCtx(context.Background())
 
 		assert.IsNil(t, resp)
 		assert.AreEqualErrs(t, err, errors.New("method is required"), "Expected error")
 	})
 
 	t.Run("error creating request", func(t *testing.T) {
-		resp, err := DoWithContext(
+		resp, err := DoWithCtx(
 			context.TODO(),
 			WithMethod(http.MethodGet),
 			WithURL("://invalid-url"),
@@ -121,7 +121,7 @@ func TestDo(t *testing.T) {
 				return nil, errors.New("network error")
 			},
 		}
-		resp, err := DoWithContext(
+		resp, err := DoWithCtx(
 			context.TODO(),
 			WithMethod(http.MethodGet),
 			WithURL("https://example.com"),
@@ -145,7 +145,7 @@ func TestDo(t *testing.T) {
 				}, nil
 			},
 		}
-		resp, err := DoWithContext(
+		resp, err := DoWithCtx(
 			context.Background(),
 			WithMethod(http.MethodGet),
 			WithURL("https://example.com"),
