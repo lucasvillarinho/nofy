@@ -12,7 +12,7 @@ import (
 )
 
 func TestNewSlackMessenger(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
+	t.Run("should create Slack messenger successfully", func(t *testing.T) {
 		messenger, err := NewSlackMessenger(
 			WithToken("test-token"),
 			WithTimeout(5*time.Second),
@@ -34,7 +34,7 @@ func TestNewSlackMessenger(t *testing.T) {
 		assert.IsNotNil(t, messenger)
 	})
 
-	t.Run("missing Token", func(t *testing.T) {
+	t.Run("should return error when token is missing", func(t *testing.T) {
 		_, err := NewSlackMessenger(
 			WithTimeout(5*time.Second),
 			WithMessage(
@@ -60,7 +60,7 @@ func TestNewSlackMessenger(t *testing.T) {
 		)
 	})
 
-	t.Run("invalid timeout", func(t *testing.T) {
+	t.Run("should return error when timeout is invalid", func(t *testing.T) {
 		_, err := NewSlackMessenger(
 			WithToken("test-token"),
 			WithTimeout(0),
@@ -87,7 +87,7 @@ func TestNewSlackMessenger(t *testing.T) {
 		)
 	})
 
-	t.Run("missing channel", func(t *testing.T) {
+	t.Run("should return error when channel is missing", func(t *testing.T) {
 		_, err := NewSlackMessenger(
 			WithToken("test-token"),
 			WithTimeout(5*time.Second),
@@ -101,7 +101,7 @@ func TestNewSlackMessenger(t *testing.T) {
 		)
 	})
 
-	t.Run("missing message", func(t *testing.T) {
+	t.Run("should return error when message content is missing", func(t *testing.T) {
 		_, err := NewSlackMessenger(
 			WithToken("test-token"),
 			WithTimeout(5*time.Second),
@@ -121,7 +121,7 @@ func TestNewSlackMessenger(t *testing.T) {
 }
 
 func TestSlackOptions(t *testing.T) {
-	t.Run("withToken", func(t *testing.T) {
+	t.Run("should set token correctly with WithToken option", func(t *testing.T) {
 		slack := &Slack{}
 		WithToken("test-token")(slack)
 
@@ -133,7 +133,7 @@ func TestSlackOptions(t *testing.T) {
 		)
 	})
 
-	t.Run("withTimeout", func(t *testing.T) {
+	t.Run("should set timeout correctly with WithTimeout option", func(t *testing.T) {
 		slack := &Slack{}
 		WithTimeout(10 * time.Second)(slack)
 
@@ -147,7 +147,7 @@ func TestSlackOptions(t *testing.T) {
 }
 
 func TestSlackSend(t *testing.T) {
-	t.Run("successful", func(t *testing.T) {
+	t.Run("should send message successfully", func(t *testing.T) {
 		mockRequester := &request.MockRequester{
 			DoFunc: func(ctx context.Context, options ...request.Option) (*http.Response, []byte, error) {
 				return &http.Response{
@@ -179,7 +179,7 @@ func TestSlackSend(t *testing.T) {
 		assert.IsNil(t, err)
 	})
 
-	t.Run("error marshalling message", func(t *testing.T) {
+	t.Run("should return error when marshalling message fails", func(t *testing.T) {
 		msg := Message{
 			Channel: "test-channel",
 			Content: []map[string]any{
@@ -209,7 +209,7 @@ func TestSlackSend(t *testing.T) {
 		)
 	})
 
-	t.Run("status nok", func(t *testing.T) {
+	t.Run("should return error when status code is not OK", func(t *testing.T) {
 		mockRequester := &request.MockRequester{
 			DoFunc: func(ctx context.Context, options ...request.Option) (*http.Response, []byte, error) {
 				return &http.Response{

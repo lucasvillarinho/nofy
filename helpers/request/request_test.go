@@ -28,37 +28,40 @@ func (e *errorReader) Read(p []byte) (n int, err error) {
 }
 
 func TestValidate(t *testing.T) {
-	t.Run("missing method", func(t *testing.T) {
-		r := &request{
-			url: "https://example.com",
-		}
-
-		err := validate(r)
-		assert.IsNotNil(t, err)
-		assert.AreEqual(t, err.Error(), "method is required")
-	})
-	t.Run("missing URL", func(t *testing.T) {
-		r := &request{
-			method: "GET",
-		}
-
-		err := validate(r)
-		assert.IsNotNil(t, err)
-		assert.AreEqual(t, err.Error(), "url is required")
-	})
-	t.Run("valid", func(t *testing.T) {
+	t.Run("should pass validation when method and URL are present", func(t *testing.T) {
 		r := &request{
 			method: "GET",
 			url:    "https://example.com",
 		}
 
 		err := validate(r)
+
 		assert.IsNil(t, err)
+	})
+	t.Run("should return error when method is missing", func(t *testing.T) {
+		r := &request{
+			url: "https://example.com",
+		}
+
+		err := validate(r)
+
+		assert.IsNotNil(t, err)
+		assert.AreEqual(t, err.Error(), "method is required")
+	})
+	t.Run("should return error when URL is missing", func(t *testing.T) {
+		r := &request{
+			method: "GET",
+		}
+
+		err := validate(r)
+
+		assert.IsNotNil(t, err)
+		assert.AreEqual(t, err.Error(), "url is required")
 	})
 }
 
 func TestWith(t *testing.T) {
-	t.Run("with client", func(t *testing.T) {
+	t.Run("should set client with WithClient option", func(t *testing.T) {
 		r := &request{}
 		client := &http.Client{}
 
@@ -67,7 +70,7 @@ func TestWith(t *testing.T) {
 		assert.AreEqual(t, r.client, client, "Expected client to be set")
 	})
 
-	t.Run("with method", func(t *testing.T) {
+	t.Run("should set method with WithMethod option", func(t *testing.T) {
 		r := &request{}
 
 		WithMethod("GET")(r)
@@ -75,7 +78,7 @@ func TestWith(t *testing.T) {
 		assert.AreEqual(t, r.method, "GET", "Expected method to be set")
 	})
 
-	t.Run("with URL", func(t *testing.T) {
+	t.Run("should set URL with WithURL option", func(t *testing.T) {
 		r := &request{}
 
 		WithURL("https://example.com")(r)
@@ -88,7 +91,7 @@ func TestWith(t *testing.T) {
 		)
 	})
 
-	t.Run("with header", func(t *testing.T) {
+	t.Run("should set header with WithHeader option", func(t *testing.T) {
 		r := &request{}
 
 		WithHeader("key", "value")(r)
@@ -101,7 +104,7 @@ func TestWith(t *testing.T) {
 		)
 	})
 
-	t.Run("with payload", func(t *testing.T) {
+	t.Run("should set payload with WithPayload option", func(t *testing.T) {
 		r := &request{}
 		payload := map[string]interface{}{
 			"key": "value",
@@ -113,7 +116,7 @@ func TestWith(t *testing.T) {
 }
 
 func TestDo(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
+	t.Run("should return response successfully", func(t *testing.T) {
 		mockClient := MockHTTPClient{
 			DoFunc: func(req *http.Request) (*http.Response, error) {
 				return &http.Response{
@@ -127,6 +130,7 @@ func TestDo(t *testing.T) {
 				}, nil
 			},
 		}
+
 		resp, body, err := NewRequester().Do(
 			context.Background(),
 			WithMethod(http.MethodGet),
@@ -151,7 +155,7 @@ func TestDo(t *testing.T) {
 		assert.IsNil(t, err)
 	})
 
-	t.Run("invalid request", func(t *testing.T) {
+	t.Run("should return error when method is missing", func(t *testing.T) {
 		resp, body, err := NewRequester().Do(context.Background())
 
 		assert.IsNil(t, resp)
@@ -164,7 +168,7 @@ func TestDo(t *testing.T) {
 		)
 	})
 
-	t.Run("error creating request", func(t *testing.T) {
+	t.Run("should return error when creating request fails", func(t *testing.T) {
 		mockClient := MockHTTPClient{
 			DoFunc: func(req *http.Request) (*http.Response, error) {
 				return nil, errors.New("network error")
@@ -191,7 +195,7 @@ func TestDo(t *testing.T) {
 		)
 	})
 
-	t.Run("error sending request", func(t *testing.T) {
+	t.Run("should return error when sending request fails", func(t *testing.T) {
 		mockClient := MockHTTPClient{
 			DoFunc: func(req *http.Request) (*http.Response, error) {
 				return nil, errors.New("network error")
@@ -216,7 +220,7 @@ func TestDo(t *testing.T) {
 		)
 	})
 
-	t.Run("error reading response body", func(t *testing.T) {
+	t.Run("should return error when reading response body fails", func(t *testing.T) {
 		mockClient := MockHTTPClient{
 			DoFunc: func(req *http.Request) (*http.Response, error) {
 				return &http.Response{
