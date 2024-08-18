@@ -36,7 +36,7 @@ format: ## Format code
 	@echo "Formatting code..."
 	@gofumpt -w .
 	@goimports -w .
-	@golines -m 80 -w .
+	@golines -m 100 -w .
 	@echo "Code formatted successfully"
 
 .PHONY: test

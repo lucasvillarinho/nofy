@@ -54,20 +54,28 @@ func NewSlackMessenger(options ...Option) (nofy.Messenger, error) {
 		opt(slack)
 	}
 
-	if strings.TrimSpace(slack.Token) == "" {
-		return nil, fmt.Errorf("missing token")
-	}
-	if slack.Timeout == 0 {
-		return nil, fmt.Errorf("missing timeout")
-	}
-	if strings.TrimSpace(slack.Message.Channel) == "" {
-		return nil, fmt.Errorf("missing channel")
-	}
-	if slack.Message.Content == nil {
-		return nil, fmt.Errorf("missing content")
+	err := validate(slack)
+	if err != nil {
+		return nil, err
 	}
 
 	return slack, nil
+}
+
+func validate(slack *Slack) error {
+	if strings.TrimSpace(slack.Token) == "" {
+		return fmt.Errorf("missing token")
+	}
+	if slack.Timeout == 0 {
+		return fmt.Errorf("missing timeout")
+	}
+	if strings.TrimSpace(slack.Message.Channel) == "" {
+		return fmt.Errorf("missing channel")
+	}
+	if slack.Message.Content == nil {
+		return fmt.Errorf("missing message")
+	}
+	return nil
 }
 
 // WithToken sets the Token for the Slack client.
@@ -105,11 +113,16 @@ func (s *Slack) Send(ctx context.Context) error {
 		Timeout: s.Timeout,
 	}
 
-	resp, body, err := s.requester.DoWithCtx(ctx,
+	resp, body, err := s.requester.Do(
+		ctx,
 		request.WithMethod(http.MethodPost),
 		request.WithURL(s.URL),
+		request.WithHeader("Authorization", "Bearer "+s.Token),
+		request.WithHeader("Content-Type", "application/json"),
+		request.WithHeader("Accept", "application/json"),
+		request.WithClient(httpClient),
 		request.WithPayload(msg),
-		request.WithClient(httpClient))
+	)
 	if err != nil {
 		return fmt.Errorf("error sending request: %w", err)
 	}

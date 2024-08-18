@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -20,10 +21,16 @@ func (m MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return m.DoFunc(req)
 }
 
+type errorReader struct{}
+
+func (e *errorReader) Read(p []byte) (n int, err error) {
+	return 0, fmt.Errorf("forced read error")
+}
+
 func TestValidate(t *testing.T) {
 	t.Run("missing method", func(t *testing.T) {
-		r := &Request{
-			URL: "https://example.com",
+		r := &request{
+			url: "https://example.com",
 		}
 
 		err := validate(r)
@@ -31,8 +38,8 @@ func TestValidate(t *testing.T) {
 		assert.AreEqual(t, err.Error(), "method is required")
 	})
 	t.Run("missing URL", func(t *testing.T) {
-		r := &Request{
-			Method: "GET",
+		r := &request{
+			method: "GET",
 		}
 
 		err := validate(r)
@@ -40,9 +47,9 @@ func TestValidate(t *testing.T) {
 		assert.AreEqual(t, err.Error(), "url is required")
 	})
 	t.Run("valid", func(t *testing.T) {
-		r := &Request{
-			Method: "GET",
-			URL:    "https://example.com",
+		r := &request{
+			method: "GET",
+			url:    "https://example.com",
 		}
 
 		err := validate(r)
@@ -52,50 +59,50 @@ func TestValidate(t *testing.T) {
 
 func TestWith(t *testing.T) {
 	t.Run("with client", func(t *testing.T) {
-		r := &Request{}
+		r := &request{}
 		client := &http.Client{}
 
 		WithClient(client)(r)
 
-		assert.AreEqual(t, r.Client, client, "Expected client to be set")
+		assert.AreEqual(t, r.client, client, "Expected client to be set")
 	})
 
 	t.Run("with method", func(t *testing.T) {
-		r := &Request{}
+		r := &request{}
 
 		WithMethod("GET")(r)
 
-		assert.AreEqual(t, r.Method, "GET", "Expected method to be set")
+		assert.AreEqual(t, r.method, "GET", "Expected method to be set")
 	})
 
 	t.Run("with URL", func(t *testing.T) {
-		r := &Request{}
+		r := &request{}
 
 		WithURL("https://example.com")(r)
 
 		assert.AreEqual(
 			t,
-			r.URL,
+			r.url,
 			"https://example.com",
 			"Expected URL to be set",
 		)
 	})
 
 	t.Run("with header", func(t *testing.T) {
-		r := &Request{}
+		r := &request{}
 
 		WithHeader("key", "value")(r)
 
 		assert.AreEqual(
 			t,
-			r.Headers["key"],
+			r.headers["key"],
 			"value",
 			"Expected header to be set",
 		)
 	})
 
 	t.Run("with payload", func(t *testing.T) {
-		r := &Request{}
+		r := &request{}
 		payload := map[string]interface{}{
 			"key": "value",
 		}
@@ -106,8 +113,46 @@ func TestWith(t *testing.T) {
 }
 
 func TestDo(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		mockClient := MockHTTPClient{
+			DoFunc: func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body: io.NopCloser(
+						strings.NewReader(`{"message": "success"}`),
+					),
+					Header: map[string][]string{
+						"Content-Type": {"application/json"},
+					},
+				}, nil
+			},
+		}
+		resp, body, err := NewRequester().Do(
+			context.Background(),
+			WithMethod(http.MethodGet),
+			WithURL("https://example.com"),
+			WithClient(mockClient),
+			WithHeader("Content-Type", "application/json"),
+		)
+
+		assert.AreEqual(
+			t,
+			resp.StatusCode,
+			http.StatusOK,
+			"Expected status code",
+		)
+		assert.AreEqual(t, `{"message": "success"}`, string(body))
+		assert.AreEqual(
+			t,
+			resp.Header.Get("Content-Type"),
+			"application/json",
+			"Expected content type",
+		)
+		assert.IsNil(t, err)
+	})
+
 	t.Run("invalid request", func(t *testing.T) {
-		resp, body, err := DoWithCtx(context.Background())
+		resp, body, err := NewRequester().Do(context.Background())
 
 		assert.IsNil(t, resp)
 		assert.IsNil(t, body)
@@ -120,11 +165,16 @@ func TestDo(t *testing.T) {
 	})
 
 	t.Run("error creating request", func(t *testing.T) {
-		resp, body, err := DoWithCtx(
+		mockClient := MockHTTPClient{
+			DoFunc: func(req *http.Request) (*http.Response, error) {
+				return nil, errors.New("network error")
+			},
+		}
+		resp, body, err := NewRequester().Do(
 			context.TODO(),
 			WithMethod(http.MethodGet),
 			WithURL("://invalid-url"),
-			WithClient(http.DefaultClient),
+			WithClient(mockClient),
 		)
 		expectedErr := errors.New(
 			"error creating request: parse \"://invalid-url\": missing protocol scheme",
@@ -136,7 +186,7 @@ func TestDo(t *testing.T) {
 			t,
 			err,
 			expectedErr,
-			"Expected error creating request",
+			"Expected error sending request",
 		)
 	})
 
@@ -146,7 +196,7 @@ func TestDo(t *testing.T) {
 				return nil, errors.New("network error")
 			},
 		}
-		resp, body, err := DoWithCtx(
+		resp, body, err := NewRequester().Do(
 			context.TODO(),
 			WithMethod(http.MethodGet),
 			WithURL("https://example.com"),
@@ -164,40 +214,31 @@ func TestDo(t *testing.T) {
 		)
 	})
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("error reading response body", func(t *testing.T) {
 		mockClient := MockHTTPClient{
 			DoFunc: func(req *http.Request) (*http.Response, error) {
 				return &http.Response{
 					StatusCode: http.StatusOK,
-					Body: io.NopCloser(
-						strings.NewReader(`{"message": "success"}`),
-					),
-					Header: map[string][]string{
-						"Content-Type": {"application/json"},
-					},
+					Body:       io.NopCloser(&errorReader{}),
 				}, nil
 			},
 		}
-		resp, body, err := DoWithCtx(
+
+		resp, body, err := NewRequester().Do(
 			context.Background(),
 			WithMethod(http.MethodGet),
 			WithURL("https://example.com"),
 			WithClient(mockClient),
+			WithHeader("Content-Type", "application/json"),
 		)
 
-		assert.AreEqual(
+		assert.IsNil(t, resp)
+		assert.IsNil(t, body)
+		assert.AreEqualErrs(
 			t,
-			resp.StatusCode,
-			http.StatusOK,
-			"Expected status code",
+			err,
+			errors.New("error reading response body: forced read error"),
+			"Expected error reading response body",
 		)
-		assert.AreEqual(t, `{"message": "success"}`, string(body))
-		assert.AreEqual(
-			t,
-			resp.Header.Get("Content-Type"),
-			"application/json",
-			"Expected content type",
-		)
-		assert.IsNil(t, err)
 	})
 }

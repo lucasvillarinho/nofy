@@ -6,12 +6,9 @@ import (
 )
 
 type MockRequester struct {
-	DoWithCtxFunc func(ctx context.Context, options ...Option) (*http.Response, []byte, error)
+	DoFunc func(ctx context.Context, options ...Option) (*http.Response, []byte, error)
 }
 
-func (m *MockRequester) DoWithCtx(
-	ctx context.Context,
-	options ...Option,
-) (*http.Response, []byte, error) {
-	return m.DoWithCtxFunc(ctx, options...)
+func (m *MockRequester) Do(ctx context.Context, options ...Option) (*http.Response, []byte, error) {
+	return m.DoFunc(ctx, options...)
 }

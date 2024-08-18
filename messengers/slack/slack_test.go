@@ -11,26 +11,29 @@ import (
 	"github.com/lucasvillarinho/nofy/helpers/request"
 )
 
-// errorReader é uma estrutura que implementa io.Reader, mas sempre retorna um erro
-type errorReader struct{}
-
-func (e *errorReader) Read(p []byte) (n int, err error) {
-	return 0, errors.New("forced read error")
-}
-
-// MockRequest é uma estrutura que você pode usar para mockar as requisições HTTP
-type MockRequest struct {
-	DoFunc func(ctx context.Context, options ...request.Option) (*http.Response, error)
-}
-
-func (m *MockRequest) DoWithCtx(
-	ctx context.Context,
-	options ...request.Option,
-) (*http.Response, error) {
-	return m.DoFunc(ctx, options...)
-}
-
 func TestNewSlackMessenger(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		messenger, err := NewSlackMessenger(
+			WithToken("test-token"),
+			WithTimeout(5*time.Second),
+			WithMessage(
+				Message{
+					Channel: "test-channel",
+					Content: []map[string]any{
+						{
+							"type": "section",
+							"text": map[string]string{
+								"type": "mrkdwn",
+								"text": "Hello, World!",
+							},
+						},
+					},
+				}),
+		)
+		assert.IsNil(t, err)
+		assert.IsNotNil(t, messenger)
+	})
+
 	t.Run("missing Token", func(t *testing.T) {
 		_, err := NewSlackMessenger(
 			WithTimeout(5*time.Second),
@@ -57,7 +60,7 @@ func TestNewSlackMessenger(t *testing.T) {
 		)
 	})
 
-	t.Run("invalid Timeout", func(t *testing.T) {
+	t.Run("invalid timeout", func(t *testing.T) {
 		_, err := NewSlackMessenger(
 			WithToken("test-token"),
 			WithTimeout(0),
@@ -97,6 +100,24 @@ func TestNewSlackMessenger(t *testing.T) {
 			"Expected missing Message error",
 		)
 	})
+
+	t.Run("missing message", func(t *testing.T) {
+		_, err := NewSlackMessenger(
+			WithToken("test-token"),
+			WithTimeout(5*time.Second),
+			WithMessage(
+				Message{
+					Channel: "test-channel",
+				}),
+		)
+
+		assert.AreEqualErrs(
+			t,
+			err,
+			errors.New("missing message"),
+			"Expected missing message error",
+		)
+	})
 }
 
 func TestSlackOptions(t *testing.T) {
@@ -128,13 +149,12 @@ func TestSlackOptions(t *testing.T) {
 func TestSlackSend(t *testing.T) {
 	t.Run("successful", func(t *testing.T) {
 		mockRequester := &request.MockRequester{
-			DoWithCtxFunc: func(ctx context.Context, options ...request.Option) (*http.Response, []byte, error) {
+			DoFunc: func(ctx context.Context, options ...request.Option) (*http.Response, []byte, error) {
 				return &http.Response{
 					StatusCode: http.StatusOK,
 				}, []byte(`{"ok": true}`), nil
 			},
 		}
-
 		msg := Message{
 			Channel: "test-channel",
 			Content: []map[string]any{
@@ -159,9 +179,39 @@ func TestSlackSend(t *testing.T) {
 		assert.IsNil(t, err)
 	})
 
+	t.Run("error marshalling message", func(t *testing.T) {
+		msg := Message{
+			Channel: "test-channel",
+			Content: []map[string]any{
+				{
+					"type": "section",
+					"text": map[string]any{
+						"type": make(chan string),
+						"text": "Hello, World!",
+					},
+				},
+			},
+		}
+		messenger := &Slack{
+			Message:   msg,
+			URL:       "https://slack.com/api/chat.postMessage",
+			Timeout:   5 * time.Second,
+			requester: nil,
+		}
+
+		err := messenger.Send(context.TODO())
+
+		assert.AreEqualErrs(
+			t,
+			err,
+			errors.New("error marshaling message: json: unsupported type: chan string"),
+			"Expected error marshalling message",
+		)
+	})
+
 	t.Run("status nok", func(t *testing.T) {
 		mockRequester := &request.MockRequester{
-			DoWithCtxFunc: func(ctx context.Context, options ...request.Option) (*http.Response, []byte, error) {
+			DoFunc: func(ctx context.Context, options ...request.Option) (*http.Response, []byte, error) {
 				return &http.Response{
 					StatusCode: http.StatusBadRequest,
 				}, []byte(`{"ok": false}`), nil

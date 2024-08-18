@@ -20,7 +20,7 @@ func (m *MockMessenger) Send(ctx context.Context) error {
 }
 
 func TestAddMessenger(t *testing.T) {
-	t.Run("Add single messenger", func(t *testing.T) {
+	t.Run("add single messenger", func(t *testing.T) {
 		s := &Nofy{}
 		m1 := &MockMessenger{}
 
@@ -34,7 +34,7 @@ func TestAddMessenger(t *testing.T) {
 		)
 	})
 
-	t.Run("Add multiple messengers", func(t *testing.T) {
+	t.Run("add multiple messengers", func(t *testing.T) {
 		s := &Nofy{}
 		m1 := &MockMessenger{}
 		m2 := &MockMessenger{}
@@ -57,7 +57,7 @@ func TestAddMessenger(t *testing.T) {
 }
 
 func TestRemoveMessenger(t *testing.T) {
-	t.Run("Remove messenger from middle of list", func(t *testing.T) {
+	t.Run("remove messenger from middle of list", func(t *testing.T) {
 		s := Nofy{}
 		m1 := &MockMessenger{}
 		m2 := &MockMessenger{}
@@ -88,7 +88,7 @@ func TestRemoveMessenger(t *testing.T) {
 		)
 	})
 
-	t.Run("Remove messenger not in list", func(t *testing.T) {
+	t.Run("remove messenger not in list", func(t *testing.T) {
 		s := Nofy{}
 		m1 := &MockMessenger{}
 		m2 := &MockMessenger{}
@@ -118,7 +118,7 @@ func TestRemoveMessenger(t *testing.T) {
 		)
 	})
 
-	t.Run("Remove first messenger", func(t *testing.T) {
+	t.Run("remove first messenger", func(t *testing.T) {
 		s := Nofy{}
 		m1 := &MockMessenger{}
 		m2 := &MockMessenger{}
@@ -141,7 +141,7 @@ func TestRemoveMessenger(t *testing.T) {
 		)
 	})
 
-	t.Run("Remove last messenger", func(t *testing.T) {
+	t.Run("remove last messenger", func(t *testing.T) {
 		s := Nofy{}
 		m1 := &MockMessenger{}
 		s.AddMessenger(m1)
@@ -158,7 +158,7 @@ func TestRemoveMessenger(t *testing.T) {
 }
 
 func TestAggregateErrors(t *testing.T) {
-	t.Run("No errors", func(t *testing.T) {
+	t.Run("no errors", func(t *testing.T) {
 		errChan := make(chan error)
 		close(errChan)
 
@@ -167,7 +167,7 @@ func TestAggregateErrors(t *testing.T) {
 		assert.IsNil(t, err, "Expected no errors")
 	})
 
-	t.Run("Single error", func(t *testing.T) {
+	t.Run("single error", func(t *testing.T) {
 		errChan := make(chan error, 1)
 		errChan <- errors.New("single error occurred")
 		close(errChan)
@@ -183,7 +183,7 @@ func TestAggregateErrors(t *testing.T) {
 		)
 	})
 
-	t.Run("Multiple errors", func(t *testing.T) {
+	t.Run("multiple errors", func(t *testing.T) {
 		errChan := make(chan error, 2)
 		errChan <- errors.New("first error")
 		errChan <- errors.New("second error")
@@ -215,7 +215,7 @@ func TestSendAll(t *testing.T) {
 		assert.IsNil(t, err, "Expected no errors")
 	})
 
-	t.Run("One message fails", func(t *testing.T) {
+	t.Run("one message fails", func(t *testing.T) {
 		s := &Nofy{
 			messengers: []Messenger{
 				&MockMessenger{},
@@ -238,7 +238,7 @@ func TestSendAll(t *testing.T) {
 		)
 	})
 
-	t.Run("All messages fail", func(t *testing.T) {
+	t.Run("all messages fail", func(t *testing.T) {
 		s := &Nofy{
 			messengers: []Messenger{
 				&MockMessenger{
