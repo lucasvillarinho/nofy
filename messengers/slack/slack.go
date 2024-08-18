@@ -20,11 +20,11 @@ type HTTPClient interface {
 
 // Slack is a client to send messages to Slack.
 type Slack struct {
+	requester request.Requester
 	URL       string
 	Token     string
 	Message   Message
 	Timeout   time.Duration
-	requester request.Requester
 }
 
 // Message is the message to send to Slack.

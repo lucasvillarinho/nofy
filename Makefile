@@ -37,6 +37,7 @@ format: ## Format code
 	@gofumpt -w .
 	@goimports -w .
 	@golines -m 100 -w .
+	@fieldalignment -fix ./...
 	@echo "Code formatted successfully"
 
 .PHONY: test

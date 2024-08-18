@@ -170,14 +170,15 @@ func TestDo(t *testing.T) {
 				return nil, errors.New("network error")
 			},
 		}
+		expectedErr := errors.New(
+			"error creating request: parse \"://invalid-url\": missing protocol scheme",
+		)
+
 		resp, body, err := NewRequester().Do(
 			context.TODO(),
 			WithMethod(http.MethodGet),
 			WithURL("://invalid-url"),
 			WithClient(mockClient),
-		)
-		expectedErr := errors.New(
-			"error creating request: parse \"://invalid-url\": missing protocol scheme",
 		)
 
 		assert.IsNil(t, resp)
@@ -196,13 +197,14 @@ func TestDo(t *testing.T) {
 				return nil, errors.New("network error")
 			},
 		}
+		expectedErr := errors.New("error sending request: network error")
+
 		resp, body, err := NewRequester().Do(
 			context.TODO(),
 			WithMethod(http.MethodGet),
 			WithURL("https://example.com"),
 			WithClient(mockClient),
 		)
-		expectedErr := errors.New("error sending request: network error")
 
 		assert.IsNil(t, resp)
 		assert.IsNil(t, body)

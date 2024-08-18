@@ -127,9 +127,9 @@ func TestAreEqualFails(t *testing.T) {
 
 func TestAreEqualErrsSuccess(t *testing.T) {
 	tests := []struct {
-		name     string
 		got      error
 		expected error
+		name     string
 	}{
 		{
 			name:     "Both errors are nil",
@@ -157,9 +157,9 @@ func TestAreEqualErrsSuccess(t *testing.T) {
 
 func TestAreEqualErrsFails(t *testing.T) {
 	tests := []struct {
-		name     string
 		got      error
 		expected error
+		name     string
 	}{
 		{
 			name:     "Got is nil, expected is not nil",
@@ -192,8 +192,8 @@ func TestAreEqualErrsFails(t *testing.T) {
 
 func TestIsNotNilSuccess(t *testing.T) {
 	tests := []struct {
-		name  string
 		value any
+		name  string
 	}{
 		{
 			name:  "Non-nil integer",
@@ -231,8 +231,8 @@ func TestIsNotNilSuccess(t *testing.T) {
 
 func TestIsNotNilFails(t *testing.T) {
 	tests := []struct {
-		name  string
 		value any
+		name  string
 	}{
 		{
 			name:  "Nil interface",
@@ -270,8 +270,8 @@ func TestIsNotNilFails(t *testing.T) {
 
 func TestIsNilSuccess(t *testing.T) {
 	tests := []struct {
-		name  string
 		value any
+		name  string
 	}{
 		{
 			name:  "Nil interface",
@@ -309,8 +309,8 @@ func TestIsNilSuccess(t *testing.T) {
 
 func TestIsNilFails(t *testing.T) {
 	tests := []struct {
-		name  string
 		value any
+		name  string
 	}{
 		{
 			name:  "Non-nil integer",

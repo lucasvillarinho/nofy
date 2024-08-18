@@ -9,11 +9,12 @@ import (
 )
 
 type request struct {
-	headers map[string]string
-	payload []byte
 	client  HTTPClient
+	headers map[string]string
+
 	method  string
 	url     string
+	payload []byte
 }
 
 type Requester interface {
