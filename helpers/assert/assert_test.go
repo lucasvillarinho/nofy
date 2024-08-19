@@ -13,31 +13,31 @@ func TestAreEqual(t *testing.T) {
 		message  string
 	}{
 		{
-			name:     "Integers are equal",
+			name:     "should return true when integers are equal",
 			got:      42,
 			expected: 42,
 			message:  "Expected integers to be equal",
 		},
 		{
-			name:     "Strings are equal",
+			name:     "should return true when strings are equal",
 			got:      "hello",
 			expected: "hello",
 			message:  "Expected strings to be equal",
 		},
 		{
-			name:     "Slices are equal",
+			name:     "should return true when slices are equal",
 			got:      []int{1, 2, 3},
 			expected: []int{1, 2, 3},
 			message:  "Expected slices to be equal",
 		},
 		{
-			name:     "Maps are equal",
+			name:     "should return true when maps are equal",
 			got:      map[string]int{"a": 1, "b": 2},
 			expected: map[string]int{"a": 1, "b": 2},
 			message:  "Expected maps to be equal",
 		},
 		{
-			name: "Structs are equal",
+			name: "should return true when structs are equal",
 			got: struct {
 				Field1 string
 				Field2 int
@@ -71,31 +71,31 @@ func TestAreEqualFails(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:          "Integers are not equal",
+			name:          "should fail when integers are not equal",
 			got:           42,
 			expected:      43,
 			expectedError: "Equal failed:\n\t\t\tGot:      42 (type int)\n\t\t\tExpected: 43 (type int)\n\t\t\t",
 		},
 		{
-			name:          "Strings are not equal",
+			name:          "should fail when strings are not equal",
 			got:           "hello",
 			expected:      "world",
 			expectedError: "Equal failed:\n\t\t\tGot:      hello (type string)\n\t\t\tExpected: world (type string)\n\t\t\t",
 		},
 		{
-			name:          "Slices are not equal",
+			name:          "should fail when slices are not equal",
 			got:           []int{1, 2, 3},
 			expected:      []int{1, 2, 4},
 			expectedError: "Equal failed:\n\t\t\tGot:      [1 2 3] (type []int)\n\t\t\tExpected: [1 2 4] (type []int)\n\t\t\t",
 		},
 		{
-			name:          "Maps are not equal",
+			name:          "should fail when maps are not equal",
 			got:           map[string]int{"a": 1, "b": 2},
 			expected:      map[string]int{"a": 1, "b": 3},
 			expectedError: "Equal failed:\n\t\t\tGot:      map[a:1 b:2] (type map[string]int)\n\t\t\tExpected: map[a:1 b:3] (type map[string]int)\n\t\t\t",
 		},
 		{
-			name: "Structs are not equal",
+			name: "should fail when structs are not equal",
 			got: struct {
 				Field1 string
 				Field2 int
@@ -127,17 +127,17 @@ func TestAreEqualFails(t *testing.T) {
 
 func TestAreEqualErrsSuccess(t *testing.T) {
 	tests := []struct {
-		name     string
 		got      error
 		expected error
+		name     string
 	}{
 		{
-			name:     "Both errors are nil",
+			name:     "should pass when both errors are nil",
 			got:      nil,
 			expected: nil,
 		},
 		{
-			name:     "Errors are the same",
+			name:     "should pass when errors are the same",
 			got:      errors.New("same error"),
 			expected: errors.New("same error"),
 		},
@@ -157,22 +157,22 @@ func TestAreEqualErrsSuccess(t *testing.T) {
 
 func TestAreEqualErrsFails(t *testing.T) {
 	tests := []struct {
-		name     string
 		got      error
 		expected error
+		name     string
 	}{
 		{
-			name:     "Got is nil, expected is not nil",
+			name:     "should fail when got is nil and expected is not nil",
 			got:      nil,
 			expected: errors.New("expected error"),
 		},
 		{
-			name:     "Expected is nil, got is not nil",
+			name:     "should fail when expected is nil and got is not nil",
 			got:      errors.New("got error"),
 			expected: nil,
 		},
 		{
-			name:     "Errors are different",
+			name:     "should fail when errors are different",
 			got:      errors.New("got error"),
 			expected: errors.New("expected error"),
 		},
@@ -192,8 +192,8 @@ func TestAreEqualErrsFails(t *testing.T) {
 
 func TestIsNotNilSuccess(t *testing.T) {
 	tests := []struct {
-		name  string
 		value any
+		name  string
 	}{
 		{
 			name:  "Non-nil integer",
@@ -231,27 +231,27 @@ func TestIsNotNilSuccess(t *testing.T) {
 
 func TestIsNotNilFails(t *testing.T) {
 	tests := []struct {
-		name  string
 		value any
+		name  string
 	}{
 		{
-			name:  "Nil interface",
+			name:  "should fail when value is a nil interface",
 			value: nil,
 		},
 		{
-			name:  "Nil pointer",
+			name:  "should fail when value is a nil pointer",
 			value: (*int)(nil),
 		},
 		{
-			name:  "Nil slice",
+			name:  "should fail when value is a nil slice",
 			value: ([]int)(nil),
 		},
 		{
-			name:  "Nil map",
+			name:  "should fail when value is a nil map",
 			value: (map[string]int)(nil),
 		},
 		{
-			name:  "Nil channel",
+			name:  "should fail when value is a nil channel",
 			value: (chan int)(nil),
 		},
 	}
@@ -270,8 +270,8 @@ func TestIsNotNilFails(t *testing.T) {
 
 func TestIsNilSuccess(t *testing.T) {
 	tests := []struct {
-		name  string
 		value any
+		name  string
 	}{
 		{
 			name:  "Nil interface",
@@ -309,27 +309,27 @@ func TestIsNilSuccess(t *testing.T) {
 
 func TestIsNilFails(t *testing.T) {
 	tests := []struct {
-		name  string
 		value any
+		name  string
 	}{
 		{
-			name:  "Non-nil integer",
+			name:  "should pass when value is a nil interface",
 			value: 42,
 		},
 		{
-			name:  "Non-nil string",
+			name:  "should pass when value is a nil pointer",
 			value: "hello",
 		},
 		{
-			name:  "Non-nil slice",
+			name:  "should pass when value is a nil slice",
 			value: []int{1, 2, 3},
 		},
 		{
-			name:  "Non-nil map",
+			name:  "should pass when value is a nil map",
 			value: map[string]int{"a": 1, "b": 2},
 		},
 		{
-			name:  "Non-nil struct",
+			name:  "should pass when value is a nil channel",
 			value: struct{ Field1 string }{Field1: "value"},
 		},
 	}
