@@ -59,6 +59,8 @@ func NewSlackMessenger(options ...Option) (nofy.Messenger, error) {
 		return nil, err
 	}
 
+	slack.requester = request.NewRequester()
+
 	return slack, nil
 }
 
@@ -109,9 +111,7 @@ func (s *Slack) Send(ctx context.Context) error {
 		return fmt.Errorf("error marshaling message: %w", err)
 	}
 
-	httpClient := &http.Client{
-		Timeout: s.Timeout,
-	}
+	httpClient := http.DefaultClient
 
 	resp, body, err := s.requester.Do(
 		ctx,

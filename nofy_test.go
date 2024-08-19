@@ -19,6 +19,34 @@ func (m *MockMessenger) Send(ctx context.Context) error {
 	return nil
 }
 
+func TestNew(t *testing.T) {
+	t.Run("should create a new Nofy instance with no messengers", func(t *testing.T) {
+		nofy := New()
+
+		assert.IsNotNil(t, nofy, "Expected Nofy instance to be created")
+		assert.AreEqual(t, len(nofy.messengers), 0, "Expected messengers list to be empty")
+	})
+}
+
+func TestNewWithMessengers(t *testing.T) {
+	t.Run("should create a new Nofy instance with provided messengers", func(t *testing.T) {
+		mockMessenger1 := &MockMessenger{}
+		mockMessenger2 := &MockMessenger{}
+
+		nofy := NewWithMessengers(mockMessenger1, mockMessenger2)
+
+		assert.IsNotNil(t, nofy, "Expected Nofy instance to be created")
+		assert.AreEqual(t, len(nofy.messengers), 2, "Expected messengers list to contain 2 items")
+	})
+
+	t.Run("should create a new Nofy instance with an empty list when no messengers are provided", func(t *testing.T) {
+		nofy := NewWithMessengers()
+
+		assert.IsNotNil(t, nofy, "Expected Nofy instance to be created")
+		assert.AreEqual(t, len(nofy.messengers), 0, "Expected messengers list to be empty")
+	})
+}
+
 func TestAddMessenger(t *testing.T) {
 	t.Run("should add a messenger to the list", func(t *testing.T) {
 		s := &Nofy{}
@@ -172,7 +200,7 @@ func TestAggregateErrors(t *testing.T) {
 		errChan := make(chan error, 1)
 		errChan <- errors.New("single error occurred")
 		close(errChan)
-		expectedError := "multiple errors occurred: single error occurred"
+		expectedError := "errors: single error occurred"
 
 		err := aggregateErrors(errChan)
 
@@ -189,7 +217,7 @@ func TestAggregateErrors(t *testing.T) {
 		errChan <- errors.New("first error")
 		errChan <- errors.New("second error")
 		close(errChan)
-		expectedError := "multiple errors occurred: first error; second error"
+		expectedError := "errors: first error; second error"
 
 		err := aggregateErrors(errChan)
 
@@ -227,7 +255,7 @@ func TestSendAll(t *testing.T) {
 				},
 			},
 		}
-		expectedError := "multiple errors occurred: failed to send message"
+		expectedError := "errors: failed to send message"
 
 		err := s.SendAll(context.Background())
 
@@ -258,5 +286,24 @@ func TestSendAll(t *testing.T) {
 		err := s.SendAll(context.Background())
 
 		assert.IsNotNil(t, err, "Expected errors")
+	})
+
+	t.Run("should handle panic gracefully and return error", func(t *testing.T) {
+		s := &Nofy{
+			messengers: []Messenger{
+				&MockMessenger{
+					sendFunc: func(_ context.Context) error {
+						panic("unexpected panic")
+					},
+				},
+				&MockMessenger{},
+			},
+		}
+		expectedError := errors.New("errors: panic recovered: unexpected panic")
+
+		err := s.SendAll(context.Background())
+
+		assert.IsNotNil(t, err, "Expected an error due to panic")
+		assert.AreEqualErrs(t, err, expectedError, "Expected panic to be recovered")
 	})
 }

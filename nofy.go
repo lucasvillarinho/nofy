@@ -48,6 +48,11 @@ func (s *Nofy) SendAll(ctx context.Context) error {
 		wg.Add(1)
 		go func(m Messenger) {
 			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					errChan <- fmt.Errorf("panic recovered: %v", r)
+				}
+			}()
 			if err := m.Send(ctx); err != nil {
 				errChan <- err
 			}
@@ -70,7 +75,7 @@ func aggregateErrors(errChan <-chan error) error {
 
 	if len(errors) > 0 {
 		return fmt.Errorf(
-			"multiple errors occurred: %s",
+			"errors: %s",
 			strings.Join(errors, "; "),
 		)
 	}
