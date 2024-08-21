@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lucasvillarinho/nofy"
-	"github.com/lucasvillarinho/nofy/helpers/request"
+	"github.com/lcvilla/nofy"
+	"github.com/lcvilla/nofy/helpers/request"
 )
 
 const Timeout = 5000
