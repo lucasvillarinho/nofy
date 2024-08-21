@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lucasvillarinho/nofy/helpers/assert"
+	"github.com/lcvilla/nofy/helpers/assert"
 )
 
 type MockHTTPClient struct {

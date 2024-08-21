@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/lucasvillarinho/nofy/helpers/assert"
+	"github.com/lcvilla/nofy/helpers/assert"
 )
 
 type MockMessenger struct {
