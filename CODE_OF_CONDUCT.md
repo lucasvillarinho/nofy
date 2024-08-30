@@ -7,6 +7,6 @@ We expect NoFy contributors to act professionally and respectfully, and we expec
 Respect people, their identities, their culture, and their work.
 Be kind. Be courteous. Be welcoming.
 Listen. Consider and acknowledge people's points before responding.
-Should you experience anything that makes you feel unwelcome in NoFy community, please contact [Villa](https://github.com/lcvilla/nofy)
+Should you experience anything that makes you feel unwelcome in NoFy community, please contact [Villa](https://github.com/lucasvillarinho/nofy)
 
 We will not tolerate harassment from anyone in our community

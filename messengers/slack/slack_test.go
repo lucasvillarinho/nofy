@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lcvilla/nofy/helpers/assert"
-	"github.com/lcvilla/nofy/helpers/request"
+	"github.com/lucasvillarinho/nofy/helpers/assert"
+	"github.com/lucasvillarinho/nofy/helpers/request"
 )
 
 func TestNewSlackMessenger(t *testing.T) {

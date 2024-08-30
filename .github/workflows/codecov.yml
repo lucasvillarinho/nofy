@@ -18,7 +18,7 @@ jobs:
           go-version: ${{ matrix.go }}
 
       - name: Run Go test with coverage
-        run: go test -coverprofile=coverage.out $(go list ./... | grep -v "github.com/lcvilla/nofy/examples")
+        run: go test -coverprofile=coverage.out $(go list ./... | grep -v "github.com/lucasvillarinho/nofy/examples")
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
