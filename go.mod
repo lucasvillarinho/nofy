@@ -1,3 +1,3 @@
-module github.com/lcvilla/nofy
+module github.com/lucasvillarinho/nofy
 
-go 1.22.2
+go 1.22.6

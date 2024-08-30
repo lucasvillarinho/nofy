@@ -5,7 +5,7 @@
 <br>
 <br>
 
-[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen.svg)](https://github.com/lcvilla/nofy/blob/main/go.mod) [![Go Report Card](https://goreportcard.com/badge/github.com/lcvilla/nofy)](https://goreportcard.com/report/github.com/lcvilla/nofy) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ec1e325348344d43906561ec19471598)](https://app.codacy.com/gh/lucasvillarinho/nofy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![codecov](https://codecov.io/github/lucasvillarinho/nofy/branch/main/graph/badge.svg?token=93EO1TC9DB)](https://codecov.io/github/lucasvillarinho/nofy)
+[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen.svg)](https://github.com/lucasvillarinho/nofy/blob/main/go.mod) [![Go Report Card](https://goreportcard.com/badge/github.com/lucasvillarinho/nofy)](https://goreportcard.com/report/github.com/lucasvillarinho/nofy) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ec1e325348344d43906561ec19471598)](https://app.codacy.com/gh/lucasvillarinho/nofy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![codecov](https://codecov.io/github/lucasvillarinho/nofy/branch/main/graph/badge.svg?token=93EO1TC9DB)](https://codecov.io/github/lucasvillarinho/nofy)
 <a href="https://codeclimate.com/github/lucasvillarinho/nofy/maintainability"><img src="https://api.codeclimate.com/v1/badges/957eaee7cf558abcf2d0/maintainability" /></a> [![Sponsor](https://img.shields.io/badge/Sponsor-❤-ff69b4.svg)](https://github.com/sponsors/lucasvillarinho)
 </div>
 
@@ -25,7 +25,7 @@
 #### Install
 
 ```sh
-go get -u github.com/lcvilla/nofy
+go get -u github.com/lucasvillarinho/nofy
 ```
 
 #### Example
@@ -69,9 +69,9 @@ Enjoying the project? Consider [supporting](https://github.com/sponsors/lucasvil
 
 ### 📜 License
 
- [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/lcvilla/nofy/blob/main/LICENSE)
+ [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/lucasvillarinho/nofy/blob/main/LICENSE)
 
-This software is licensed under the [MIT](https://github.com/lcvilla/nofy/blob/main/LICENSE)
+This software is licensed under the [MIT](https://github.com/lucasvillarinho/nofy/blob/main/LICENSE)
 
 ### 🫂 Special Thanks
 

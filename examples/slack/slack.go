@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	"github.com/lcvilla/nofy"
-	"github.com/lcvilla/nofy/messengers/slack"
+	"github.com/lucasvillarinho/nofy"
+	"github.com/lucasvillarinho/nofy/messengers/slack"
 )
 
 func main() {
