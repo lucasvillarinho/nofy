@@ -30,6 +30,7 @@ func TestNewSlackMessenger(t *testing.T) {
 					},
 				}),
 		)
+
 		assert.IsNil(t, err)
 		assert.IsNotNil(t, messenger)
 	})
@@ -198,14 +199,52 @@ func TestSlackSend(t *testing.T) {
 			Timeout:   5 * time.Second,
 			requester: nil,
 		}
+		expectedErr := errors.New("error marshaling message: json: unsupported type: chan string")
 
 		err := messenger.Send(context.TODO())
 
 		assert.AreEqualErrs(
 			t,
 			err,
-			errors.New("error marshaling message: json: unsupported type: chan string"),
+			expectedErr,
 			"Expected error marshalling message",
+		)
+	})
+
+	t.Run("should return error when sending message fails", func(t *testing.T) {
+		mockRequester := &request.MockRequester{
+			DoFunc: func(ctx context.Context, options ...request.Option) (*http.Response, []byte, error) {
+				return nil, nil, errors.New("error sending message")
+			},
+		}
+
+		msg := Message{
+			Channel: "test-channel",
+			Content: []map[string]any{
+				{
+					"type": "section",
+					"text": map[string]string{
+						"type": "mrkdwn",
+						"text": "Hello, World!",
+					},
+				},
+			},
+		}
+		messenger := &Slack{
+			Message:   msg,
+			URL:       "https://slack.com/api/chat.postMessage",
+			Timeout:   5 * time.Second,
+			requester: mockRequester,
+		}
+		expectedErr := errors.New("error sending request: error sending message")
+
+		err := messenger.Send(context.TODO())
+
+		assert.AreEqualErrs(
+			t,
+			err,
+			expectedErr,
+			"Expected error sending message",
 		)
 	})
 
@@ -236,14 +275,94 @@ func TestSlackSend(t *testing.T) {
 			Timeout:   5 * time.Second,
 			requester: mockRequester,
 		}
+		expectedErr := errors.New("error sending message: status-code: 400")
 
 		err := messenger.Send(context.TODO())
 
 		assert.AreEqualErrs(
 			t,
 			err,
-			errors.New("error sending message status-code: 400"),
+			expectedErr,
 			"Expected error sending message",
 		)
 	})
+
+	t.Run("should return error when response is not JSON", func(t *testing.T) {
+		mockRequester := &request.MockRequester{
+			DoFunc: func(ctx context.Context, options ...request.Option) (*http.Response, []byte, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+				}, []byte(`not-json`), nil
+			},
+		}
+
+		msg := Message{
+			Channel: "test-channel",
+			Content: []map[string]any{
+				{
+					"type": "section",
+					"text": map[string]string{
+						"type": "mrkdwn",
+						"text": "Hello, World!",
+					},
+				},
+			},
+		}
+		messenger := &Slack{
+			Message:   msg,
+			URL:       "",
+			Timeout:   5 * time.Second,
+			requester: mockRequester,
+		}
+		expectedErr := errors.New("error unmarshalling response: invalid character 'o' in literal null (expecting 'u')")
+
+		err := messenger.Send(context.TODO())
+
+		assert.AreEqualErrs(
+			t,
+			err,
+			expectedErr,
+			"Expected error sending message",
+		)
+	})
+
+	t.Run("should return error when response is not OK", func(t *testing.T) {
+		mockRequester := &request.MockRequester{
+			DoFunc: func(ctx context.Context, options ...request.Option) (*http.Response, []byte, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+				}, []byte(`{"ok": false, "error": "some error"}`), nil
+			},
+		}
+
+		msg := Message{
+			Channel: "test-channel",
+			Content: []map[string]any{
+				{
+					"type": "section",
+					"text": map[string]string{
+						"type": "mrkdwn",
+						"text": "Hello, World!",
+					},
+				},
+			},
+		}
+		messenger := &Slack{
+			Message:   msg,
+			URL:       "",
+			Timeout:   5 * time.Second,
+			requester: mockRequester,
+		}
+		expectedErr := errors.New("error sending message: some error")
+
+		err := messenger.Send(context.TODO())
+
+		assert.AreEqualErrs(
+			t,
+			err,
+			expectedErr,
+			"Expected error sending message",
+		)
+	})
+
 }
