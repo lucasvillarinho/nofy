@@ -156,6 +156,8 @@ func TestDo(t *testing.T) {
 	})
 
 	t.Run("should return error when method is missing", func(t *testing.T) {
+		expectedErr := errors.New("method is required")
+
 		resp, body, err := NewRequester().Do(context.Background())
 
 		assert.IsNil(t, resp)
@@ -163,7 +165,7 @@ func TestDo(t *testing.T) {
 		assert.AreEqualErrs(
 			t,
 			err,
-			errors.New("method is required"),
+			expectedErr,
 			"Expected error",
 		)
 	})
@@ -229,6 +231,7 @@ func TestDo(t *testing.T) {
 				}, nil
 			},
 		}
+		expectedErr := errors.New("error reading response body: forced read error")
 
 		resp, body, err := NewRequester().Do(
 			context.Background(),
@@ -243,7 +246,7 @@ func TestDo(t *testing.T) {
 		assert.AreEqualErrs(
 			t,
 			err,
-			errors.New("error reading response body: forced read error"),
+			expectedErr,
 			"Expected error reading response body",
 		)
 	})

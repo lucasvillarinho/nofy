@@ -129,7 +129,7 @@ func (s *Slack) Send(ctx context.Context) error {
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf(
-			"error sending message status-code: %d",
+			"error sending message: status-code: %d",
 			resp.StatusCode,
 		)
 	}

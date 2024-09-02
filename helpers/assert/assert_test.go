@@ -65,34 +65,34 @@ func TestAreEqual(t *testing.T) {
 
 func TestAreEqualFails(t *testing.T) {
 	tests := []struct {
-		name          string
-		got           interface{}
-		expected      interface{}
-		expectedError string
+		name        string
+		got         interface{}
+		expected    interface{}
+		expectedErr string
 	}{
 		{
-			name:          "should fail when integers are not equal",
-			got:           42,
-			expected:      43,
-			expectedError: "Equal failed:\n\t\t\tGot:      42 (type int)\n\t\t\tExpected: 43 (type int)\n\t\t\t",
+			name:        "should fail when integers are not equal",
+			got:         42,
+			expected:    43,
+			expectedErr: "Equal failed:\n\t\t\tGot:      42 (type int)\n\t\t\tExpected: 43 (type int)\n\t\t\t",
 		},
 		{
-			name:          "should fail when strings are not equal",
-			got:           "hello",
-			expected:      "world",
-			expectedError: "Equal failed:\n\t\t\tGot:      hello (type string)\n\t\t\tExpected: world (type string)\n\t\t\t",
+			name:        "should fail when strings are not equal",
+			got:         "hello",
+			expected:    "world",
+			expectedErr: "Equal failed:\n\t\t\tGot:      hello (type string)\n\t\t\tExpected: world (type string)\n\t\t\t",
 		},
 		{
-			name:          "should fail when slices are not equal",
-			got:           []int{1, 2, 3},
-			expected:      []int{1, 2, 4},
-			expectedError: "Equal failed:\n\t\t\tGot:      [1 2 3] (type []int)\n\t\t\tExpected: [1 2 4] (type []int)\n\t\t\t",
+			name:        "should fail when slices are not equal",
+			got:         []int{1, 2, 3},
+			expected:    []int{1, 2, 4},
+			expectedErr: "Equal failed:\n\t\t\tGot:      [1 2 3] (type []int)\n\t\t\tExpected: [1 2 4] (type []int)\n\t\t\t",
 		},
 		{
-			name:          "should fail when maps are not equal",
-			got:           map[string]int{"a": 1, "b": 2},
-			expected:      map[string]int{"a": 1, "b": 3},
-			expectedError: "Equal failed:\n\t\t\tGot:      map[a:1 b:2] (type map[string]int)\n\t\t\tExpected: map[a:1 b:3] (type map[string]int)\n\t\t\t",
+			name:        "should fail when maps are not equal",
+			got:         map[string]int{"a": 1, "b": 2},
+			expected:    map[string]int{"a": 1, "b": 3},
+			expectedErr: "Equal failed:\n\t\t\tGot:      map[a:1 b:2] (type map[string]int)\n\t\t\tExpected: map[a:1 b:3] (type map[string]int)\n\t\t\t",
 		},
 		{
 			name: "should fail when structs are not equal",
@@ -110,7 +110,7 @@ func TestAreEqualFails(t *testing.T) {
 				Field1: "world",
 				Field2: 42,
 			},
-			expectedError: "Equal failed:\n\t\t\tGot:      {hello 42} (type struct { Field1 string; Field2 int })\n\t\t\tExpected: {world 42} (type struct { Field1 string; Field2 int })\n\t\t\t",
+			expectedErr: "Equal failed:\n\t\t\tGot:      {hello 42} (type struct { Field1 string; Field2 int })\n\t\t\tExpected: {world 42} (type struct { Field1 string; Field2 int })\n\t\t\t",
 		},
 	}
 
@@ -127,26 +127,26 @@ func TestAreEqualFails(t *testing.T) {
 
 func TestAreEqualErrsSuccess(t *testing.T) {
 	tests := []struct {
-		got      error
-		expected error
-		name     string
+		got         error
+		expectedErr error
+		name        string
 	}{
 		{
-			name:     "should pass when both errors are nil",
-			got:      nil,
-			expected: nil,
+			name:        "should pass when both errors are nil",
+			got:         nil,
+			expectedErr: nil,
 		},
 		{
-			name:     "should pass when errors are the same",
-			got:      errors.New("same error"),
-			expected: errors.New("same error"),
+			name:        "should pass when errors are the same",
+			got:         errors.New("same error"),
+			expectedErr: errors.New("same error"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			subT := &testing.T{}
-			AreEqualErrs(subT, tt.got, tt.expected)
+			AreEqualErrs(subT, tt.got, tt.expectedErr)
 
 			if subT.Failed() {
 				t.Fatalf("Expected test %s to pass, but it failed", tt.name)
@@ -157,31 +157,31 @@ func TestAreEqualErrsSuccess(t *testing.T) {
 
 func TestAreEqualErrsFails(t *testing.T) {
 	tests := []struct {
-		got      error
-		expected error
-		name     string
+		got         error
+		expectedErr error
+		name        string
 	}{
 		{
-			name:     "should fail when got is nil and expected is not nil",
-			got:      nil,
-			expected: errors.New("expected error"),
+			name:        "should fail when got is nil and expected is not nil",
+			got:         nil,
+			expectedErr: errors.New("expected error"),
 		},
 		{
-			name:     "should fail when expected is nil and got is not nil",
-			got:      errors.New("got error"),
-			expected: nil,
+			name:        "should fail when expected is nil and got is not nil",
+			got:         errors.New("got error"),
+			expectedErr: nil,
 		},
 		{
-			name:     "should fail when errors are different",
-			got:      errors.New("got error"),
-			expected: errors.New("expected error"),
+			name:        "should fail when errors are different",
+			got:         errors.New("got error"),
+			expectedErr: errors.New("expected error"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			subT := &testing.T{}
-			AreEqualErrs(subT, tt.got, tt.expected)
+			AreEqualErrs(subT, tt.got, tt.expectedErr)
 
 			if !subT.Failed() {
 				t.Fatalf("Expected test %s to fail, but it didn't", tt.name)

@@ -200,14 +200,14 @@ func TestAggregateErrors(t *testing.T) {
 		errChan := make(chan error, 1)
 		errChan <- errors.New("single error occurred")
 		close(errChan)
-		expectedError := "errors: single error occurred"
+		expectedErr := errors.New("errors: single error occurred")
 
 		err := aggregateErrors(errChan)
 
 		assert.AreEqualErrs(
 			t,
 			err,
-			errors.New(expectedError),
+			expectedErr,
 			"Expected single error",
 		)
 	})
@@ -217,14 +217,14 @@ func TestAggregateErrors(t *testing.T) {
 		errChan <- errors.New("first error")
 		errChan <- errors.New("second error")
 		close(errChan)
-		expectedError := "errors: first error; second error"
+		expectedErr := errors.New("errors: first error; second error")
 
 		err := aggregateErrors(errChan)
 
 		assert.AreEqualErrs(
 			t,
 			err,
-			errors.New(expectedError),
+			expectedErr,
 			"Expected multiple errors",
 		)
 	})
@@ -255,14 +255,14 @@ func TestSendAll(t *testing.T) {
 				},
 			},
 		}
-		expectedError := "errors: failed to send message"
+		expectedErr := errors.New("errors: failed to send message")
 
 		err := s.SendAll(context.Background())
 
 		assert.AreEqualErrs(
 			t,
 			err,
-			errors.New(expectedError),
+			expectedErr,
 			"Expected one error",
 		)
 	})
@@ -299,11 +299,11 @@ func TestSendAll(t *testing.T) {
 				&MockMessenger{},
 			},
 		}
-		expectedError := errors.New("errors: panic recovered: unexpected panic")
+		expectedErr := errors.New("errors: panic recovered: unexpected panic")
 
 		err := s.SendAll(context.Background())
 
 		assert.IsNotNil(t, err, "Expected an error due to panic")
-		assert.AreEqualErrs(t, err, expectedError, "Expected panic to be recovered")
+		assert.AreEqualErrs(t, err, expectedErr, "Expected panic to be recovered")
 	})
 }
