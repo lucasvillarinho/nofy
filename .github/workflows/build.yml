@@ -15,7 +15,7 @@ jobs:
         with:
           go-version: stable
       - name: Build Go project
-        run: go build -o myapp
+        run: go build -o app
       - name: Upload build
         uses: actions/upload-artifact@v3
         with:
