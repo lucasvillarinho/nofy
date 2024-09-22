@@ -1,4 +1,4 @@
-name: Golang workflow
+name: Go
 
 on:
   push:
@@ -19,14 +19,28 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
+  security:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
       - name: Run govulncheck
         run: go run golang.org/x/vuln/cmd/govulncheck@latest -test ./...
-      
       - name: Run securego/gosec
         run: go run github.com/securego/gosec/v2/cmd/gosec@latest -quiet ./...
-        
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6.1.0
-      
-      - name: Run unit test
+
+  tests:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run unit tests
         run: go test -race $(go list ./... | grep -v "github.com/lucasvillarinho/nofy/tests/e2e")
