@@ -1,11 +1,11 @@
 name: Test Coverage Workflow
 
 on:
-  workflow_run:
-    workflows: ["Build Workflow"]
-    types:
-      - completed
-
+  push:
+    paths: ["**.go"]
+  pull_request:
+    paths: ["**.go"]
+    
 jobs:
   coverage:
     runs-on: ubuntu-latest

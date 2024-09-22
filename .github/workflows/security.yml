@@ -1,11 +1,11 @@
-name: Security Workflow
+name: Security 
 
 on:
-  workflow_run:
-    workflows: ["Build Workflow"]
-    types:
-      - completed
-
+  push:
+    paths: ["**.go"]
+  pull_request:
+    paths: ["**.go"]
+    
 jobs:
   secure:
     runs-on: ubuntu-latest
