@@ -1,4 +1,4 @@
-name: Build 
+name: Build
 
 on:
   push:
@@ -15,4 +15,9 @@ jobs:
         with:
           go-version: stable
       - name: Build Go project
-        run: go build 
+        run: go build -o myapp
+      - name: Upload build
+        uses: actions/upload-artifact@v3
+        with:
+          name: app
+          path: ./app
