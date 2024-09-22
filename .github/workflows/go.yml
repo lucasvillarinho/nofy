@@ -52,4 +52,4 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run e2e tests
-        run: go test -race $$(go list ./... | grep "github.com/lucasvillarinho/nofy/tests/e2e")
+        run: go test -race $(go list ./... | grep "github.com/lucasvillarinho/nofy/tests/e2e")
