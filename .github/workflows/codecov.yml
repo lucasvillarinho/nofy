@@ -1,24 +1,22 @@
-name: Codecov workflow
+name: Coverage
 
 on:
   push:
+    paths: ["**.go"]
   pull_request:
+    paths: ["**.go"]
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        go: [ 'stable' ]
-        os: [ 'ubuntu-latest' ]
-    runs-on: ${{ matrix.os }}
+  coverage:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
         with:
-          go-version: ${{ matrix.go }}
+          go-version: stable
 
       - name: Run Go test with coverage
-        run: go test -coverprofile=coverage.out $(go list ./... | grep -v "github.com/lucasvillarinho/nofy/examples")
+        run: go test -coverprofile=coverage.out $(go list ./... | grep -v "github.com/lucasvillarinho/nofy/examples" | grep -v "github.com/lucasvillarinho/nofy/tests/e2e")
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
