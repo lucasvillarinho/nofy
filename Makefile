@@ -42,4 +42,6 @@ format: ## Format code
 
 .PHONY: test
 test: ## Run unit test
-	go test -v -coverprofile=rawcover.out -json $$(go list ./... | grep -v "github.com/lucasvillarinho/nofy/examples") 2>&1 | tee /tmp/gotest.log | gotestfmt -hide successful-tests,empty-packages
+	go test -v -coverprofile=rawcover.out -json $$(go list ./... | grep -v "github.com/lucasvillarinho/nofy/examples" | grep -v "github.com/lucasvillarinho/nofy/tests/e2e") 2>&1 | tee /tmp/gotest.log | gotestfmt -hide successful-tests,empty-packages
+
+

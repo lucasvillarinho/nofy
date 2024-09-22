@@ -1,0 +1,17 @@
+name: Test Workflow
+
+on:
+  workflow_run:
+    workflows: ["Build Workflow"]
+    types:
+      - completed
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6.1.0
+      - name: Run unit tests
+        run: go test -race ./...

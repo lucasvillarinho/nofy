@@ -1,0 +1,17 @@
+name: Security Workflow
+
+on:
+  workflow_run:
+    workflows: ["Build Workflow"]
+    types:
+      - completed
+
+jobs:
+  secure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest -test ./...
+      - name: Run securego/gosec
+        run: go run github.com/securego/gosec/v2/cmd/gosec@latest -quiet ./...

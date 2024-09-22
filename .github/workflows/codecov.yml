@@ -1,21 +1,19 @@
-name: Codecov workflow
+name: Test Coverage Workflow
 
 on:
-  push:
-  pull_request:
+  workflow_run:
+    workflows: ["Build Workflow"]
+    types:
+      - completed
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        go: [ 'stable' ]
-        os: [ 'ubuntu-latest' ]
-    runs-on: ${{ matrix.os }}
+  coverage:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
         with:
-          go-version: ${{ matrix.go }}
+          go-version: stable
 
       - name: Run Go test with coverage
         run: go test -coverprofile=coverage.out $(go list ./... | grep -v "github.com/lucasvillarinho/nofy/examples")
