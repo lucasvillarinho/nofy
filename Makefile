@@ -44,4 +44,6 @@ format: ## Format code
 test: ## Run unit test
 	go test -v -coverprofile=rawcover.out -json $$(go list ./... | grep -v "github.com/lucasvillarinho/nofy/examples" | grep -v "github.com/lucasvillarinho/nofy/tests/e2e") 2>&1 | tee /tmp/gotest.log | gotestfmt -hide successful-tests,empty-packages
 
-
+.PHONY: e2e-test
+e2e-test: ## Run e2e test
+	go test -race $$(go list ./... | grep "github.com/lucasvillarinho/nofy/tests/e2e")
