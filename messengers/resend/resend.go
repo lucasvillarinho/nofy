@@ -13,17 +13,21 @@ import (
 
 const Timeout = 5000
 
+var MarshalFunc = func(v interface{}) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
 // Resend is a client to send messages to Resend.
 type Resend struct {
-	request request.Requester
-	URL     string
-	Token   string
-	Timeout time.Duration
-	Message Message
+	requester request.Requester
+	URL       string
+	Token     string
+	Timeout   time.Duration
+	Message   Message
 }
 
 // Message is the message to send to Resend.
@@ -46,7 +50,7 @@ type Option func(*Resend)
 // NewResendMessenger creates a new Resend client.
 func NewResendMessenger(options ...Option) (*Resend, error) {
 	resend := &Resend{
-		URL:     "https://api.sendgrid.com/v3/mail/send",
+		URL:     "https://api.resend.com/emails",
 		Timeout: Timeout * time.Millisecond,
 	}
 
@@ -103,14 +107,14 @@ func WithMessage(message Message) Option {
 
 // Send sends a message using the Resend client.
 func (r *Resend) Send(ctx context.Context) error {
-	msg, err := json.Marshal(r.Message)
+	msg, err := MarshalFunc(r.Message)
 	if err != nil {
 		return fmt.Errorf("error marshaling message: %w", err)
 	}
 
 	HTTPClient := http.DefaultClient
 
-	res, body, err := r.request.Do(ctx,
+	res, body, err := r.requester.Do(ctx,
 		request.WithMethod(http.MethodPost),
 		request.WithURL(r.URL),
 		request.WithHeader("Authorization", "Bearer "+r.Token),
@@ -124,7 +128,7 @@ func (r *Resend) Send(ctx context.Context) error {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("error sending message: %s", body)
+		return fmt.Errorf("error sending message: status-code: %d body: %s", res.StatusCode, body)
 	}
 
 	return nil
