@@ -13,9 +13,7 @@ import (
 
 const Timeout = 5000
 
-var MarshalFunc = func(v interface{}) ([]byte, error) {
-	return json.Marshal(v)
-}
+var MarshalFunc = json.Marshal
 
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
@@ -26,8 +24,8 @@ type Resend struct {
 	requester request.Requester
 	URL       string
 	Token     string
-	Timeout   time.Duration
 	Message   Message
+	Timeout   time.Duration
 }
 
 // Message is the message to send to Resend.
@@ -38,11 +36,11 @@ type Resend struct {
 // HTML is the HTML content of the email.
 type Message struct {
 	From    string   `json:"from"`
-	To      []string `json:"to"`
 	CC      string   `json:"cc"`
 	Subject string   `json:"subject"`
 	HTML    string   `json:"html"`
 	Text    string   `json:"text"`
+	To      []string `json:"to"`
 }
 
 type Option func(*Resend)
@@ -99,9 +97,9 @@ func WithTimeout(timeout time.Duration) Option {
 }
 
 // WithMessage sets the Message for the Resend client.
-func WithMessage(message Message) Option {
+func WithMessage(message *Message) Option {
 	return func(r *Resend) {
-		r.Message = message
+		r.Message = *message
 	}
 }
 

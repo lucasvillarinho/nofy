@@ -20,7 +20,7 @@ func TestNewResendMessenger(t *testing.T) {
 			WithToken("test-token"),
 			WithTimeout(5*time.Second),
 			WithMessage(
-				Message{
+				&Message{
 					From:    "test-from",
 					To:      []string{"test-to"},
 					Subject: "test-subject",
@@ -36,7 +36,7 @@ func TestNewResendMessenger(t *testing.T) {
 		_, err := NewResendMessenger(
 			WithTimeout(5*time.Second),
 			WithMessage(
-				Message{
+				&Message{
 					From:    "test-from",
 					To:      []string{"test-to"},
 					Subject: "test-subject",
@@ -57,7 +57,7 @@ func TestNewResendMessenger(t *testing.T) {
 			WithToken("test-token"),
 			WithTimeout(5*time.Second),
 			WithMessage(
-				Message{
+				&Message{
 					To:      []string{"test-to"},
 					Subject: "test-subject",
 					HTML:    "<p> Text Html</p>",
@@ -77,7 +77,7 @@ func TestNewResendMessenger(t *testing.T) {
 			WithToken("test-token"),
 			WithTimeout(5*time.Second),
 			WithMessage(
-				Message{
+				&Message{
 					From:    "test-from",
 					Subject: "test-subject",
 					HTML:    "<p> Text Html</p>",
@@ -90,7 +90,6 @@ func TestNewResendMessenger(t *testing.T) {
 			errors.New("missing to"),
 			"Expected missing Resend To error",
 		)
-
 	})
 
 	t.Run("should return error when subject is missing", func(t *testing.T) {
@@ -98,7 +97,7 @@ func TestNewResendMessenger(t *testing.T) {
 			WithToken("test-token"),
 			WithTimeout(5*time.Second),
 			WithMessage(
-				Message{
+				&Message{
 					From: "test-from",
 					To:   []string{"test-to"},
 					HTML: "<p> Text Html</p>",
@@ -172,9 +171,7 @@ func TestSend(t *testing.T) {
 			"Expected error marshaling message",
 		)
 
-		MarshalFunc = func(v interface{}) ([]byte, error) {
-			return json.Marshal(v)
-		}
+		MarshalFunc = json.Marshal
 	})
 
 	t.Run("should return error when request fails", func(t *testing.T) {
@@ -216,7 +213,8 @@ func TestSend(t *testing.T) {
 						StatusCode: http.StatusUnprocessableEntity,
 					}, []byte(bodyResponse),
 					nil
-			}}
+			},
+		}
 
 		message := Message{
 			From:    "test-from",
@@ -243,5 +241,4 @@ func TestSend(t *testing.T) {
 			"Expected error sending message",
 		)
 	})
-
 }

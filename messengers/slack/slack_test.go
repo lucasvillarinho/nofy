@@ -314,7 +314,9 @@ func TestSlackSend(t *testing.T) {
 			Timeout:   5 * time.Second,
 			requester: mockRequester,
 		}
-		expectedErr := errors.New("error unmarshalling response: invalid character 'o' in literal null (expecting 'u')")
+		expectedErr := errors.New(
+			"error unmarshalling response: invalid character 'o' in literal null (expecting 'u')",
+		)
 
 		err := messenger.Send(context.TODO())
 
@@ -364,5 +366,4 @@ func TestSlackSend(t *testing.T) {
 			"Expected error sending message",
 		)
 	})
-
 }
