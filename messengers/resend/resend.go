@@ -61,6 +61,8 @@ func NewResendMessenger(options ...Option) (*Resend, error) {
 		return nil, err
 	}
 
+	resend.requester = request.NewRequester()
+
 	return resend, nil
 }
 

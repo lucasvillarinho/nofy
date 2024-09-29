@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"context"
-	"log"
 	"os"
 	"testing"
 
@@ -16,13 +15,13 @@ func TestSend(t *testing.T) {
 	slackChannel := os.Getenv("SLACK_CHANNEL")
 
 	if slackToken == "" || slackChannel == "" {
-		log.Fatal(
+		t.Fatal(
 			"E2E Test Setup: Environment variables SLACK_TOKEN and SLACK_CHANNEL must be set before running the end-to-end tests.",
 		)
 	}
 
 	t.Run("should send message to slack", func(t *testing.T) {
-		slackMessenger, _ := slack.NewSlackMessenger(
+		slackMessenger, err := slack.NewSlackMessenger(
 			slack.WithToken(slackToken),
 			slack.WithMessage(
 				slack.Message{
@@ -37,9 +36,11 @@ func TestSend(t *testing.T) {
 						},
 					},
 				}))
+		assert.IsNil(t, err)
+
 		nofy := nofy.NewWithMessengers(slackMessenger)
 
-		err := nofy.SendAll(context.Background())
+		err = nofy.SendAll(context.Background())
 
 		assert.IsNil(t, err)
 	})
