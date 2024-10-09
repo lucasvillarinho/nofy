@@ -39,12 +39,15 @@ func TestNewWithMessengers(t *testing.T) {
 		assert.AreEqual(t, len(nofy.messengers), 2, "Expected messengers list to contain 2 items")
 	})
 
-	t.Run("should create a new Nofy instance with an empty list when no messengers are provided", func(t *testing.T) {
-		nofy := NewWithMessengers()
+	t.Run(
+		"should create a new Nofy instance with an empty list when no messengers are provided",
+		func(t *testing.T) {
+			nofy := NewWithMessengers()
 
-		assert.IsNotNil(t, nofy, "Expected Nofy instance to be created")
-		assert.AreEqual(t, len(nofy.messengers), 0, "Expected messengers list to be empty")
-	})
+			assert.IsNotNil(t, nofy, "Expected Nofy instance to be created")
+			assert.AreEqual(t, len(nofy.messengers), 0, "Expected messengers list to be empty")
+		},
+	)
 }
 
 func TestAddMessenger(t *testing.T) {
