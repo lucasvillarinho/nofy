@@ -56,4 +56,6 @@ jobs:
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+          RESEND_TO: ${{ secrets.RESEND_TO }}
+          RESEND_TOKEN: ${{ secrets.RESEND_TOKEN }}
         run: go test -race $(go list ./... | grep "github.com/lucasvillarinho/nofy/tests/e2e")
